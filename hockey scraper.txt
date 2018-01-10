@@ -1,0 +1,47 @@
+*TEAMS 
+[Id, Name, Abbrev., Venue, Division_Id, Division_Name, Conference_Id, Conference_Name, Franchise_Id, Active(Bool)]
+# https://statsapi.web.nhl.com/api/v1/teams/1
+# ARI==PHX
+# team v franchise? 
+
+*PLAYERS 
+[Id, Name, First_Name, Last_Name, Number, Pos, Team_Id, Team_Name, Birth_Date, Birth_City, Birth_Province, Birth_Country, 
+	Nationality, Height, Weight, Active(Bool), Shoots, Roster_Status]
+# http://statsapi.web.nhl.com/api/v1/people/8471283
+
+SCHEDULE
+[Game_Id, Season, Date, Game_Type(reg. vs playoffs), Round, Series, Game, Game_State, Home_Team_Id, Home_Team, Away_Team_Id, 
+	Away_Team, Home_Score, Away_Score, Home_Wins, Home_Losses, Home_OT, Away_Wins, Away_Losses, Away_OT, Venue, Attendance]
+#https://statsapi.web.nhl.com/api/v1/schedule?startDate=2010-10-03&endDate=2011-06-20
+
+GAME_ROSTERS 
+[Game_Id, Player_Id, Full_Name, First_Name, Last_Name, Number, Pos, Team_Id, Team_Abbrev, Age, Shoots, Height, Weight, 
+	Captain, Rookie, Scratch, First_Star(Bool), Second_Star(Bool), 
+	Third_Star(Bool), W_Goalie(Bool), L_Goalie(Bool)]
+# http://statsapi.web.nhl.com/api/v1/game/2017020214/feed/live
+
+COACHES
+[Game_Id, Home_Coach, Away_Coach]
+
+OFFICIALS
+[Game_Id, Referee1, Referee2, Linesman1, Linesman2]
+
+GAME_SHIFTS 
+[Game_Id, Period, Player_Id, Player_Name, Team_Id, Team_Abbrev, Shift_Num, Start, End, Duration]
+
+GAME_EVENTS 
+[Game_Id, Period, Event_Num, Event_Type, Secondary_Type, Penl_Class, Penl_Length, Event_Descr, Time_Elapsed, 
+	Player1_Id, Player2_Id, Player3_Id, Player4_Id, Home_Score, Away_Score, *Home_Zone, Away_Zone, 
+	Home_Strength, Away_Strength, Home_Goalie_Pulled(Bool), Away_Goalie_Pulled(Bool), *X, Y, Dist, 
+	H1, H2, H3, H4, H5, H6, A1, A2, A3, A4, A5, A6, Penalty_Shot(Bool)]
+
+
+# parse html from 2007 & 2008
+
+
+SCRAPE/PARSE BY SCHEDULE TO BUILD DATABASE OF TEAMS, PLAYERS, GAME_ROSTERS, GAME_SHIFTS, GAME_EVENTS *don't re-scrape games that have already been scraped (what about stat changes after the fact?)
+PARSE PLAYER_STATS, TEAM_STATS, GOALIE_STATS
+LINE STATS/PAIRING STATS/WOWY
+SHOT HEAT MAPS, game corsi charts, 
+etc.     
+
