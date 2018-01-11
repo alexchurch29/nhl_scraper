@@ -49,7 +49,17 @@ def scrape_games(start_date, end_date):
     rosters = pd.concat(rosters, ignore_index=True)
     shifts = pd.concat(shifts, ignore_index=True)
     pbp = pd.concat(pbp, ignore_index=True)
+    coaches = pd.concat(coaches, ignore_index=True)
+    officials = pd.concat(officials, ignore_index=True)
 
     return schedule, rosters, shifts, pbp, coaches, officials
 
-scrape_games("2017-10-07", "2017-12-23")
+
+def games_to_csv(start_date, end_date):
+    games = scrape_games(start_date, end_date)
+    games[0].to_csv("schedule")
+    games[1].to_csv("rosters")
+    games[2].to_csv("shifts")
+    games[3].to_csv("pbp")
+    games[4].to_csv("coaches")
+    games[5].to_csv("officials")
