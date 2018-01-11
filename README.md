@@ -1,6 +1,6 @@
 # nhl_scraper
-Used to scrape html and json files provided by the NHL in order to scrape games for dataframe of game rosters, shift data, and game event data. 
+Used to scrape and parse html and json files provided by the NHL for all games in a given date range. Returns csv files with dataframes of schedule, game rosters, shift data, game event data, coaches, and officials. 
 
-Builds heavily off of the NHL Scraper repository created by Harry Shomer (https://github.com/HarryShomer/Hockey-Scraper), addtl credit to Muneeb Alam (https://github.com/muneebalam). 
+Builds heavily off of the NHL Scraper repository created by Harry Shomer (https://github.com/HarryShomer/Hockey-Scraper), with addtl credit to Muneeb Alam (https://github.com/muneebalam). 
 
 Currently works for all games from the 2009 season onward. 
