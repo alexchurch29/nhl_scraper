@@ -43,35 +43,29 @@ def get_players(soup):
     tables[4] is home scratches
     """
 
-    away_players = tables[1].find_all('td')
-    away_scratches = tables[3].find_all('td')
-    home_players = tables[2].find_all('td')
-    home_scratches = tables[4].find_all('td')
+    del tables[0]
+    player_info = [table.find_all('td') for table in tables]
 
-    away_players = [i.get_text() for i in away_players]
-    away_scratches = [i.get_text() for i in away_scratches]
-    home_players = [i.get_text() for i in home_players]
-    home_scratches = [i.get_text() for i in home_scratches]
+    player_info = [[x.get_text() for x in group] for group in player_info]
 
     # Make list of list of 3 each. The three are: number, position, name (in that order)
-    away_players = [away_players[i:i + 3] for i in range(0, len(away_players), 3)]
-    away_scratches = [away_scratches[i:i + 3] for i in range(0, len(away_scratches), 3)]
-    home_players = [home_players[i:i + 3] for i in range(0, len(home_players), 3)]
-    home_scratches = [home_scratches[i:i + 3] for i in range(0, len(home_scratches), 3)]
+    player_info = [[group[i:i + 3] for i in range(0, len(group), 3)] for group in player_info]
 
     # Get rid of header column
-    away_players = [i for i in away_players if i[0] != '#']
-    away_scratches = [i for i in away_scratches if i[0] != '#']
-    home_players = [i for i in home_players if i[0] != '#']
-    home_scratches = [i for i in home_scratches if i[0] != '#']
+    player_info = [[player for player in group if player[0] != '#'] for group in player_info]
 
     # Create dict that records captains for the given game
     # {'Away Captain': 'AWAY CAPTAIN', 'Away Assistants': 'AWAY ASSISTANTS',
     # 'Home Captain': 'HOME CAPTAIN', 'Home Assistants': 'HOME ASSISTANTS'}
-    captains['Away Captain'] = [i for i in away_players if i[0] != '\xa0' and i[2].find('(C)') != -1]
-    captains['Away Assistants'] = [i for i in away_players if i[0] != '\xa0' and i[2].find('(A)') != -1]
-    captains['Home Captain'] = [i for i in home_players if i[0] != '\xa0' and i[2].find('(C)') != -1]
-    captains['Home Assistants'] = [i for i in home_players if i[0] != '\xa0' and i[2].find('(A)') != -1]
+    captains['Away Captain'] = [i for i in player_info[0] if i[0] != '\xa0' and i[2].find('(C)') != -1]
+    captains['Away Assistants'] = [i for i in player_info[0] if i[0] != '\xa0' and i[2].find('(A)') != -1]
+    captains['Home Captain'] = [i for i in player_info[1] if i[0] != '\xa0' and i[2].find('(C)') != -1]
+    captains['Home Assistants'] = [i for i in player_info[1] if i[0] != '\xa0' and i[2].find('(A)') != -1]
+
+    away_players = player_info[0] + player_info[2]
+    home_players = player_info[1] + player_info[3]
+    away_scratches = player_info[2]
+    home_scratches = player_info[3]
 
     def fix_name(player):
         """
@@ -84,21 +78,19 @@ def get_players(soup):
 
         return player
 
-    away_players = away_players + away_scratches
-    home_players = home_players + home_scratches
 
     # For those with (A) or (C) in name field get rid of it
-    # first condition is to control when we get whitespace as one of the indices
+    # First condition is to control when we get whitespace as one of the indices
     players['Away'] = [fix_name(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in away_players]
     players['Home'] = [fix_name(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in home_players]
     scratches['Away Scratch'] = [fix_name(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in away_scratches]
     scratches['Home Scratch'] = [fix_name(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in home_scratches]
 
     # Get rid when just whitespace
-    players['Away'] = [i for i in away_players if i[0] != '\xa0']
-    players['Home'] = [i for i in home_players if i[0] != '\xa0']
-    scratches['Away Scratch'] = [i for i in away_scratches if i[0] != '\xa0']
-    scratches['Home Scratch'] = [i for i in home_scratches if i[0] != '\xa0']
+    players['Away'] = [i for i in away_players if i[0] != u'\xa0']
+    players['Home'] = [i for i in home_players if i[0] != u'\xa0']
+    scratches['Away Scratch'] = [i for i in away_scratches if i[0] != u'\xa0']
+    scratches['Home Scratch'] = [i for i in home_scratches if i[0] != u'\xa0']
 
     # Returns home and away team
     teams = soup.find_all(class_='teamHeading')
@@ -182,20 +174,12 @@ def get_goalies(soup_game_summary):
     :return: dict of winning & losing goalies
     """
 
-    goalies = []
     table = soup_game_summary.find('table', id='MainTable')
     tables = table.find_all('td', 'bborder + rborder')
-    text = []
-    for i in tables:
-        text.append(i.get_text())
+    text = [i.get_text() for i in tables]
     from itertools import zip_longest
-    for i, j in zip_longest(text[:-1], text[1:]):
-        if i == 'G':
-            goalies.append(j)
-    goalie = []
-    for i in goalies:
-        x = re.split(r'[, ]', i)
-        goalie.append(x)
+    goalies = [j for i, j in zip_longest(text[:-1], text[1:]) if i == 'G']
+    goalie = [re.split(r'[, ]', i) for i in goalies]
     goalies = dict()
     for i in goalie:
         if '(W)' in i:
@@ -258,7 +242,7 @@ def scrape_roster(game_id):
         html_game_summary = get_url(url_game_summary)
         time.sleep(1)
     except Exception as e:
-        print('Roster for game {} is not there'.format(game_id), e)
+        print('Game Summary for game {} is not there'.format(game_id), e)
         raise Exception
 
     try:
@@ -266,7 +250,7 @@ def scrape_roster(game_id):
         goalies = get_goalies(soup_game_summary)
         three_stars = get_stars(soup_game_summary)
     except Exception as e:
-        print('Problem with playing roster for game {}'.format(game_id), e)
+        print('Problem with game summary for game {}'.format(game_id), e)
         raise Exception
 
     return players, head_coaches, officials, goalies, three_stars
