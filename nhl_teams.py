@@ -15,7 +15,4 @@ def fix_team(team):
     :param team: full team name
     :return: team acronym
     """
-    if team in teams.keys():
-        return teams[team]
-    else:
-        return team
+    return teams.get(team, team)
