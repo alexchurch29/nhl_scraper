@@ -146,3 +146,27 @@ def scrape_games_by_id(games):
     officials = pd.concat(officials, ignore_index=True)
 
     return rosters, shifts, pbp, coaches, officials
+
+
+def convert_to_csv():
+    """
+    Used to convert all pickle files of pd dataframes into csv files
+    :return: csv file of rosters, shifts, pbp, coaches, officials, schedule
+    """
+    r = pd.read_pickle('rosters.pickle')
+    s = pd.read_pickle('shifts.pickle')
+    p = pd.read_pickle('pbp.pickle')
+    c = pd.read_pickle('coaches.pickle')
+    o = pd.read_pickle('officials.pickle')
+    z = pd.read_pickle('schedule.pickle')
+
+    r.to_csv('rosters.csv')
+    s.to_csv('shifts.csv')
+    p.to_csv('pbp.csv')
+    c.to_csv('coaches.csv')
+    o.to_csv('officials.csv')
+    z.to_csv('schedule.csv')
+
+
+scrape_schedule('2017-10-01', '2018-05-01')
+# scrape_games_by_date('2018-01-13', '2018-01-13')
