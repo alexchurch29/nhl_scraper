@@ -88,10 +88,11 @@ def scrape_schedule(date_from, date_to):
                     schedule['Home_OT'] = game['teams']['home']['leagueRecord']['ot']
 
                 schedule['Venue'] = game['venue']['name']
-                html = get_html(game['gamePk'])
-                time.sleep(1)
-                soup = BeautifulSoup(html.content, 'html.parser')
+
                 try:
+                    html = get_html(game['gamePk'])
+                    time.sleep(1)
+                    soup = BeautifulSoup(html.content, 'html.parser')
                     schedule['Attendance'] = get_gameinfo(soup)['Attendance']
                     schedule['Start'] = get_gameinfo(soup)['Start']
                     schedule['End'] = get_gameinfo(soup)['End']
