@@ -18,8 +18,11 @@ def get_url(url):
     retries = Retry(total=10, backoff_factor=.1)
     response.mount('http://', HTTPAdapter(max_retries=retries))
 
-    response = response.get(url, timeout=5)
-    response.raise_for_status()
+    try:
+        response = response.get(url, timeout=5)
+        response.raise_for_status()
+    except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
+        return None
 
     return response
 
