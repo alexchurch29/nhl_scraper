@@ -146,6 +146,3 @@ def scrape_games_by_id(games):
     officials = pd.concat(officials, ignore_index=True)
 
     return rosters, shifts, pbp, coaches, officials
-
-scrape_schedule('2017-10-01', '2018-05-01')
-scrape_games_by_date('2017-10-01', '2018-01-12')
