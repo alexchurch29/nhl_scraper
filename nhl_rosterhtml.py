@@ -67,7 +67,7 @@ def get_players(soup):
     away_scratches = player_info[2]
     home_scratches = player_info[3]
 
-    def fix_name(player):
+    def fix_capt(player):
         """
         Sometimes a player had a (A) or (C) attached to their name
         :param player: list of player info -> [number, position, name]
@@ -81,10 +81,10 @@ def get_players(soup):
 
     # For those with (A) or (C) in name field get rid of it
     # First condition is to control when we get whitespace as one of the indices
-    players['Away'] = [fix_name(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in away_players]
-    players['Home'] = [fix_name(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in home_players]
-    scratches['Away Scratch'] = [fix_name(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in away_scratches]
-    scratches['Home Scratch'] = [fix_name(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in home_scratches]
+    players['Away'] = [fix_capt(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in away_players]
+    players['Home'] = [fix_capt(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in home_players]
+    scratches['Away Scratch'] = [fix_capt(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in away_scratches]
+    scratches['Home Scratch'] = [fix_capt(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in home_scratches]
 
     # Get rid when just whitespace
     players['Away'] = [i for i in away_players if i[0] != u'\xa0']
@@ -351,6 +351,8 @@ def parse_roster(game_id):
         else:
             star.append(np.NaN)
     rosters['Star'] = star
+    # fixes issues with player names
+    rosters['Name'] = rosters['Name'].map(lambda x: fix_name(x))
 
     # create pandas Dataframe of home & away team's coach for given game
     coaches = pd.DataFrame(players[1], index=[0])
@@ -363,3 +365,5 @@ def parse_roster(game_id):
     officials['Game_Id'] = game_id
 
     return rosters, coaches, officials
+
+print(parse_roster(2017020010))
