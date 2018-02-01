@@ -365,5 +365,3 @@ def parse_roster(game_id):
     officials['Game_Id'] = game_id
 
     return rosters, coaches, officials
-
-print(parse_roster(2017020010))

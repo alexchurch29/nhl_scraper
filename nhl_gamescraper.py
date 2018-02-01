@@ -153,6 +153,7 @@ def convert_to_csv():
     Used to convert all pickle files of pd dataframes into csv files
     :return: csv file of rosters, shifts, pbp, coaches, officials, schedule
     """
+    
     r = pd.read_pickle('rosters.pickle')
     s = pd.read_pickle('shifts.pickle')
     p = pd.read_pickle('pbp.pickle')
@@ -166,3 +167,7 @@ def convert_to_csv():
     c.to_csv('coaches.csv', index=False)
     o.to_csv('officials.csv', index=False)
     z.to_csv('schedule.csv', index=False)
+
+
+# scrape_schedule('2017-10-01', '2018-05-01')
+# scrape_games_by_date('2018-01-13', '2018-01-28')
