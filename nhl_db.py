@@ -22,32 +22,23 @@ def update():
     z.to_sql('schedule', conn, if_exists='replace')
 
 # creates full list of skaters
+# NAME, SEASON**, TEAM*, POS, GP, TOI
 # to aggregate for multi player teams add r.team to GROUP BY
+# to aggregate for multiple seasons remove z.season from GROUP BY
 skaters = pd.read_sql_query ('''
-SELECT r.name, r.pos, r.team
-FROM rosters r INNER JOIN shifts s 
-ON r.name = s.player
-WHERE pos != 'G' 
-    AND s.duration > 0
-GROUP BY r.pos, r.name
-ORDER BY r.name;''', conn)
+SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, s.TOI
+FROM rosters r 
+INNER JOIN schedule z 
+ON r.game_id = z.game_id
+INNER JOIN (SELECT player, ROUND(SUM(duration)/60,2) as TOI
+    FROM shifts
+    GROUP BY player) as s
+ON s.player = r.name
+WHERE r.pos != 'G' 
+    AND r.scratch is null
+GROUP BY z.season, r.name, r.pos
+ORDER BY r.name, z.season;''', conn)
 
-
-
-
-
-
-
-# goals by player all strengths
-#goals = pd.read_sql_query('''
-#SELECT r.NAME, COUNT(*) AS 'Goals'
-#FROM pbp p INNER JOIN rosters r
-#ON (r.GAME_ID = p.GAME_ID
-#	AND r.NUM = p.P1_NUM
-#	AND r.TEAM = p.P1_TEAM)
-#WHERE (p.EVENT_TYPE = 'GOAL'
-#	AND p.PERIOD != '5')
-#ORDER BY goals;''', conn)
 
 
 # full list of goalies
