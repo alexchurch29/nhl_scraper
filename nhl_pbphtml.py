@@ -303,7 +303,7 @@ def parse_pbp(gameid):
                 elif '5 min' in i[5]:
                     play['Penl_Length'] = 5
                 elif '10 min' in i[5]:
-                    play['Penl_Length'] = 'misconduct'
+                    play['Penl_Length'] = 10
 
                 play['P1_Team'] = i[5][:3]
                 for value in teams.values():

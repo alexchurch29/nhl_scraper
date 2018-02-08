@@ -27,7 +27,10 @@ def update():
 # to aggregate for multiple seasons remove z.season from GROUP BY
 skaters_all_strengths = pd.read_sql_query ('''
 SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, goal.G, assist1.A1, assist2.A2, 
-    (assist1.A1 + assist2.A2) as A,  (goal.G + (assist1.A1 + assist2.A2)) as P, (goal.G + assist1.A1) as P1
+    (assist1.A1 + assist2.A2) as A,  (goal.G + (assist1.A1 + assist2.A2)) as P, (goal.G + assist1.A1) as P1,
+    (goal.G + shots.SH) as SH, (round(goal.G,2)  / (round(shots.SH,2) + round(goal.G,2))) as 'SH%', missed.MISS as 
+    MISS, blocked.BLOCK as BLOCKED, (shots.SH + missed.MISS + blocked.BLOCK) as iCF, (shots.SH + missed.MISS) as iFF, 
+    pim.PIM, penl.PEN, min.Minor, maj.Major, misc.Misconduct
 
 FROM rosters r 
 
@@ -74,6 +77,105 @@ LEFT OUTER JOIN (SELECT name, count(name) as A2
         and p.period != 5)
     GROUP BY name) as assist2
 ON assist2.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as SH
+    FROM (SELECT r.name, p.p1_team, p.p1_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'SHOT'
+        and p.period != 5)
+    GROUP BY name) as shots
+ON shots.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as MISS
+    FROM (SELECT r.name, p.p1_team, p.p1_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'MISS'
+        and p.period != 5)
+    GROUP BY name) as missed
+ON missed.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as BLOCK
+    FROM (SELECT r.name, p.p2_team, p.p2_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p2_team
+        and r.num=p.p2_num)
+    WHERE p.event_type = 'BLOCK'
+        and p.period != 5)
+    GROUP BY name) as blocked
+ON blocked.name = r.name
+
+LEFT OUTER JOIN (SELECT name, sum(penl_length) as PIM
+    FROM (SELECT r.name, p.p1_team, p.p1_num, p.penl_length
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'PENL'
+        and p.period != 5)
+    GROUP BY name) as pim
+ON pim.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as PEN
+    FROM (SELECT r.name, p.p1_team, p.p1_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'PENL'
+        and p.period != 5)
+    GROUP BY name) as penl
+ON penl.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as Minor
+    FROM (SELECT r.name, p.p1_team, p.p1_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'PENL'
+        and p.penl_length = 2
+        and p.period != 5)
+    GROUP BY name) as min
+ON min.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as Major
+    FROM (SELECT r.name, p.p1_team, p.p1_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'PENL'
+        and p.penl_length = 5
+        and p.period != 5)
+    GROUP BY name) as maj
+ON maj.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as Misconduct
+    FROM (SELECT r.name, p.p1_team, p.p1_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'PENL'
+        and p.penl_length = 10
+        and p.period != 5)
+    GROUP BY name) as misc
+ON misc.name = r.name
     
 WHERE r.pos != 'G' 
     AND r.scratch is null
@@ -94,4 +196,5 @@ ORDER BY P DESC, r.name;''', conn)
 #	AND s.duration > 0
 #ORDER BY r.name;''', conn)
 
-print(skaters)
+print(skaters_all_strengths)
+
