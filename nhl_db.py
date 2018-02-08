@@ -30,7 +30,10 @@ SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, goal.G
     (assist1.A1 + assist2.A2) as A,  (goal.G + (assist1.A1 + assist2.A2)) as P, (goal.G + assist1.A1) as P1,
     (goal.G + shots.SH) as SH, (round(goal.G,2)  / (round(shots.SH,2) + round(goal.G,2))) as 'SH%', missed.MISS as 
     MISS, blocked.BLOCK as BLOCKED, (shots.SH + missed.MISS + blocked.BLOCK) as iCF, (shots.SH + missed.MISS) as iFF, 
-    pim.PIM, penl.PEN, min.Minor, maj.Major, misc.Misconduct
+    pim.PIM, penl.PENL_Taken, min.Minor, maj.Major, misc.Misconduct, pend.PENL_Drawn, give.Giveaways, take.Takeaways,
+    hit.hits, hittaken.Hits_Taken, blocksfor.Shot_Blocks, faceoffwon.Faceoffs_Won, faceofflost.Faceoffs_Lost, 
+    (round(faceoffwon.Faceoffs_Won, 2) / (round(faceoffwon.Faceoffs_Won, 2) + round(faceofflost.Faceoffs_Lost, 2))) 
+    as 'Faceoff%'
 
 FROM rosters r 
 
@@ -126,7 +129,7 @@ LEFT OUTER JOIN (SELECT name, sum(penl_length) as PIM
     GROUP BY name) as pim
 ON pim.name = r.name
 
-LEFT OUTER JOIN (SELECT name, count(name) as PEN
+LEFT OUTER JOIN (SELECT name, count(name) as PENL_Taken
     FROM (SELECT r.name, p.p1_team, p.p1_num
     FROM pbp p
     INNER JOIN rosters r
@@ -176,6 +179,102 @@ LEFT OUTER JOIN (SELECT name, count(name) as Misconduct
         and p.period != 5)
     GROUP BY name) as misc
 ON misc.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as PENL_Drawn
+    FROM (SELECT r.name, p.p2_team, p.p2_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p2_team
+        and r.num=p.p2_num)
+    WHERE p.event_type = 'PENL'
+        and p.period != 5)
+    GROUP BY name) as pend
+ON pend.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as Giveaways
+    FROM (SELECT r.name, p.p1_team, p.p1_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'GIVE'
+        and p.period != 5)
+    GROUP BY name) as give
+ON give.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as Takeaways
+    FROM (SELECT r.name, p.p1_team, p.p1_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'TAKE'
+        and p.period != 5)
+    GROUP BY name) as take
+ON take.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as Hits
+    FROM (SELECT r.name, p.p1_team, p.p1_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'HIT'
+        and p.period != 5)
+    GROUP BY name) as hit
+ON hit.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as Hits_Taken
+    FROM (SELECT r.name, p.p2_team, p.p2_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p2_team
+        and r.num=p.p2_num)
+    WHERE p.event_type = 'HIT'
+        and p.period != 5)
+    GROUP BY name) as hittaken
+ON hittaken.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as Shot_Blocks
+    FROM (SELECT r.name, p.p1_team, p.p1_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'BLOCK'
+        and p.period != 5)
+    GROUP BY name) as blocksfor
+ON blocksfor.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as Faceoffs_Won
+    FROM (SELECT r.name, p.p1_team, p.p1_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p1_team
+        and r.num=p.p1_num)
+    WHERE p.event_type = 'FAC'
+        and p.period != 5)
+    GROUP BY name) as faceoffwon
+ON faceoffwon.name = r.name
+
+LEFT OUTER JOIN (SELECT name, count(name) as Faceoffs_Lost
+    FROM (SELECT r.name, p.p2_team, p.p2_num
+    FROM pbp p
+    INNER JOIN rosters r
+    ON (r.game_id = p.game_id
+        and r.team=p.p2_team
+        and r.num=p.p2_num)
+    WHERE p.event_type = 'FAC'
+        and p.period != 5)
+    GROUP BY name) as faceofflost
+ON faceofflost.name = r.name
     
 WHERE r.pos != 'G' 
     AND r.scratch is null
