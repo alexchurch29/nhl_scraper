@@ -25,7 +25,7 @@ def update():
 # NAME, SEASON**, TEAM*, POS, GP, TOI, G
 # to aggregate for multi player teams add r.team to GROUP BY
 # to aggregate for multiple seasons remove z.season from GROUP BY
-skaters_all_strengths = pd.read_sql_query ('''
+skaters_individual_counts = pd.read_sql_query ('''
 SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, goal.G, assist1.A1, assist2.A2, 
     (assist1.A1 + assist2.A2) as A,  (goal.G + (assist1.A1 + assist2.A2)) as P, (goal.G + assist1.A1) as P1,
     (goal.G + shots.SH) as SH, (round(goal.G,2)  / (round(shots.SH,2) + round(goal.G,2))) as 'SH%', missed.MISS as 
@@ -283,8 +283,6 @@ GROUP BY z.season, r.name, r.pos
 
 ORDER BY P DESC, r.name;''', conn)
 
-
-
 # full list of goalies
 #goalies = pd.read_sql_query('''
 #SELECT DISTINCT r.name, pos
@@ -295,5 +293,102 @@ ORDER BY P DESC, r.name;''', conn)
 #	AND s.duration > 0
 #ORDER BY r.name;''', conn)
 
-print(skaters_all_strengths)
+skater_on_ice_counts = pd.read_sql_query('''
+SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, cf.CF
+
+FROM rosters r 
+
+INNER JOIN schedule z 
+ON r.game_id = z.game_id
+
+INNER JOIN (SELECT player, ROUND(SUM(duration)/60,2) as TOI
+    FROM shifts
+    GROUP BY player) as icetime
+ON icetime.player = r.name
+
+LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as CF
+    FROM
+        (SELECT p.game_id, event_type, p1_team, p2_team, p.name as name, p.pos as pos, p.team as team
+        
+        FROM 
+            (SELECT p.game_id, event_type, p1_team, p2_team, p.name, r.Team as team, p.pos
+            
+            FROM
+                (SELECT game_id, event_type, p1_team, p2_team, H1Name as name, H1Num as num, H1Pos as pos
+                
+                FROM pbp
+                
+                WHERE H1Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, p1_team, p2_team, H2Name, H2Num, H2Pos
+                FROM pbp
+                WHERE H2Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, p1_team, p2_team, H3Name, H3Num, H3Pos
+                FROM pbp
+                WHERE H3Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, p1_team, p2_team, H4Name, H4Num, H4Pos
+                FROM pbp
+                WHERE H4Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, p1_team, p2_team, H5Name, H5Num, H5Pos
+                FROM pbp
+                WHERE H5Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, p1_team, p2_team, H6Name, H6Num, H6Pos
+                FROM pbp
+                WHERE H6Pos != 'G'
+                UNION ALL
+                
+                SELECT game_id, event_type, p1_team, p2_team, A1Name, A1Num, A1Pos
+                FROM pbp
+                WHERE A1Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, p1_team, p2_team, A2Name, A2Num, A2Pos
+                FROM pbp
+                WHERE A2Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, p1_team, p2_team, A3Name, A3Num, A3Pos
+                FROM pbp
+                WHERE A3Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, p1_team, p2_team, A4Name, A4Num, A4Pos
+                FROM pbp
+                WHERE A4Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, p1_team, p2_team, A5Name, A5Num, A5Pos
+                FROM pbp
+                WHERE A5Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, p1_team, p2_team, A6Name, A6Num, A6Pos
+                FROM pbp
+                WHERE A6Pos != 'G'
+                ) as p
+                
+            INNER JOIN rosters r 
+            ON (r.game_id=p.game_id
+                and r.name=p.name
+                and r.num=p.num)
+            ) as p
+            
+        WHERE (event_type='GOAL' and p1_team=p.team)
+            or (event_type='MISS' and p1_team=p.team)
+            or (event_type='SHOT' and p1_team=p.team)
+            or (event_type='BLOCK' and p2_team=p.team)
+        ) as p
+        
+    GROUP BY p.name) as cf
+ON CF.name=r.name
+
+WHERE r.pos != 'G' 
+    AND r.scratch is null
+    
+GROUP BY z.season, r.name, r.pos
+
+ORDER BY cf.CF DESC, r.name
+    
+;''', conn)
+
+print(skater_on_ice_counts)
 
