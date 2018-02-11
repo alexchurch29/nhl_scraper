@@ -375,6 +375,9 @@ def parse_pbp(gameid):
 
             if i[4] == 'MISS':
                 play['P1_Team'] = i[5][:3]
+                for value in teams.values():
+                    if value != i[5][:3]:
+                        play['P4_Team'] = value
                 for shot in shot_types:
                     if shot in i[5]:
                         play['Secondary_Type'] = shot
@@ -384,6 +387,11 @@ def parse_pbp(gameid):
                 regex = re.compile(r'#(\d+)')
                 desc = regex.search(i[5]).groups()  # num
                 play['P1_Num'] = desc[0]
+                for key, value in teams.items():
+                    if value != i[5][:3] and key == 'away':
+                        play['P4_Num'] = i[6][len(i[6])-1][1]
+                    elif value != i[5][:3] and key == 'home':
+                        play['P4_Num'] = i[7][len(i[7])-1][1]
                 dist = i[5].split(',')
                 feet = re.findall('\d+', dist[len(dist) - 1][1:])
                 play['Dist'] = feet[0]
