@@ -289,8 +289,8 @@ SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, cf.CF,
 +round(ca.CA,2)) as 'CF%', ff.FF, fa.FA, round(ff.FF,2)/(round(ff.FF,2)+round(fa.FA,2)) as 'FF%', sf.SF, sa.SA, 
 round(sf.SF,2)/(round(sf.SF,2)+round(sa.SA,2)) as 'SF%', gf.GF, ga.GA, round(gf.GF,2)/(round(gf.GF,2)
 +round(ga.GA,2)) as 'GF%', round(gf.GF,2)/(round(gf.GF,2)+round(sf.SF,2)) as 'On-Ice SH%', 
-round(ga.GA,2)/(round(ga.GA,2)+round(sa.SA,2)) as 'On-Ice SV%', (round(gf.GF,2)/(round(gf.GF,2)+round(sf.SF,2)))+
-(round(ga.GA,2)/(round(ga.GA,2)+round(sa.SA,2))) as PDO, oz.OZ_Faceoffs, dz.DZ_Faceoffs, nz.NZ_Faceoffs
+1 - (round(ga.GA,2)/(round(ga.GA,2)+round(sa.SA,2))) as 'On-Ice SV%', (round(gf.GF,2)/(round(gf.GF,2)+round(sf.SF,2)))+
+(1- (round(ga.GA,2)/(round(ga.GA,2)+round(sa.SA,2)))) as PDO, oz.OZ_Faceoffs, dz.DZ_Faceoffs, nz.NZ_Faceoffs
 
 FROM rosters r 
 
@@ -1105,11 +1105,6 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as NZ_Faceoff
         
     GROUP BY p.name) as nz
 ON nz.name=r.name
-
-LEFT OUTER JOIN (SELECT player, ROUND(SUM(duration)/60,2) as TOI
-    FROM shifts
-    GROUP BY player) as icetime
-ON icetime.player = r.name
 
 WHERE r.pos != 'G' 
     AND r.scratch is null
