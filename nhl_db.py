@@ -523,7 +523,7 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as FF
     GROUP BY p.name) as ff
 ON FF.name=r.name
 
-LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as CA
+LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as FA
     FROM
         (SELECT p.game_id, event_type, p4_team, p.name as name, p.pos as pos, p.team as team
         
