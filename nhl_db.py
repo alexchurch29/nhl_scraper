@@ -285,10 +285,10 @@ ORDER BY P DESC, r.name;''', conn)
 
 
 skater_on_ice_counts = pd.read_sql_query('''
-SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, cf.CF, ca.CA, (round(cf.CF,2)/((round(cf.CF,2)
-+round(ca.CA,2))) as 'CF%', ff.FF, fa.FA, (round(ff.FF,2)/((round(ff.FF,2)+round(fa.FA,2))) as 'FF%', sf.SF, sa.SA, 
-(round(sf.SF,2)/((round(sf.SF,2)+round(sa.SA,2))) as 'SF%', gf.GF, ga.GA, (round(gf.GF,2)/((round(gf.GF,2)
-+round(ga.GA,2))) as 'GF%'
+SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, cf.CF, ca.CA, round(cf.CF,2)/(round(cf.CF,2)
++round(ca.CA,2)) as 'CF%', ff.FF, fa.FA, round(ff.FF,2)/(round(ff.FF,2)+round(fa.FA,2)) as 'FF%', sf.SF, sa.SA, 
+round(sf.SF,2)/(round(sf.SF,2)+round(sa.SA,2)) as 'SF%', gf.GF, ga.GA, round(gf.GF,2)/(round(gf.GF,2)
++round(ga.GA,2)) as 'GF%'
 
 FROM rosters r 
 
