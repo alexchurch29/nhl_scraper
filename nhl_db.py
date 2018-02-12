@@ -288,7 +288,9 @@ skater_on_ice_counts = pd.read_sql_query('''
 SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, cf.CF, ca.CA, round(cf.CF,2)/(round(cf.CF,2)
 +round(ca.CA,2)) as 'CF%', ff.FF, fa.FA, round(ff.FF,2)/(round(ff.FF,2)+round(fa.FA,2)) as 'FF%', sf.SF, sa.SA, 
 round(sf.SF,2)/(round(sf.SF,2)+round(sa.SA,2)) as 'SF%', gf.GF, ga.GA, round(gf.GF,2)/(round(gf.GF,2)
-+round(ga.GA,2)) as 'GF%'
++round(ga.GA,2)) as 'GF%', round(gf.GF,2)/(round(gf.GF,2)+round(sf.SF,2)) as 'On-Ice SH%', 
+round(ga.GA,2)/(round(ga.GA,2)+round(sa.SA,2)) as 'On-Ice SV%', (round(gf.GF,2)/(round(gf.GF,2)+round(sf.SF,2)))+
+(round(ga.GA,2)/(round(ga.GA,2)+round(sa.SA,2))) as PDO, oz.OZ_Faceoffs, dz.DZ_Faceoffs, nz.NZ_Faceoffs
 
 FROM rosters r 
 
@@ -887,6 +889,227 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as GA
         
     GROUP BY p.name) as ga
 ON GA.name=r.name
+
+LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as OZ_Faceoffs
+    FROM
+        (SELECT p.game_id, event_type, p.zone, p.name as name, p.pos as pos, p.team as team
+        
+        FROM 
+            (SELECT p.game_id, event_type, p.zone, p.name, r.Team as team, p.pos
+            
+            FROM
+                (SELECT game_id, event_type, home_zone as zone, H1Name as name, H1Num as num, H1Pos as pos
+                
+                FROM pbp
+                
+                WHERE H1Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H2Name, H2Num, H2Pos
+                FROM pbp
+                WHERE H2Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H3Name, H3Num, H3Pos
+                FROM pbp
+                WHERE H3Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H4Name, H4Num, H4Pos
+                FROM pbp
+                WHERE H4Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H5Name, H5Num, H5Pos
+                FROM pbp
+                WHERE H5Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H6Name, H6Num, H6Pos
+                FROM pbp
+                WHERE H6Pos != 'G'
+                UNION ALL
+                
+                SELECT game_id, event_type, away_zone, A1Name, A1Num, A1Pos
+                FROM pbp
+                WHERE A1Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A2Name, A2Num, A2Pos
+                FROM pbp
+                WHERE A2Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A3Name, A3Num, A3Pos
+                FROM pbp
+                WHERE A3Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A4Name, A4Num, A4Pos
+                FROM pbp
+                WHERE A4Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A5Name, A5Num, A5Pos
+                FROM pbp
+                WHERE A5Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A6Name, A6Num, A6Pos
+                FROM pbp
+                WHERE A6Pos != 'G'
+                ) as p
+                
+            INNER JOIN rosters r 
+            ON (r.game_id=p.game_id
+                and r.name=p.name
+                and r.num=p.num)
+            ) as p
+            
+        WHERE (event_type='FAC' and zone ='OZ')
+        ) as p
+        
+    GROUP BY p.name) as oz
+ON oz.name=r.name
+
+LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as DZ_Faceoffs
+    FROM
+        (SELECT p.game_id, event_type, p.zone, p.name as name, p.pos as pos, p.team as team
+        
+        FROM 
+            (SELECT p.game_id, event_type, p.zone, p.name, r.Team as team, p.pos
+            
+            FROM
+                (SELECT game_id, event_type, home_zone as zone, H1Name as name, H1Num as num, H1Pos as pos
+                
+                FROM pbp
+                
+                WHERE H1Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H2Name, H2Num, H2Pos
+                FROM pbp
+                WHERE H2Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H3Name, H3Num, H3Pos
+                FROM pbp
+                WHERE H3Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H4Name, H4Num, H4Pos
+                FROM pbp
+                WHERE H4Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H5Name, H5Num, H5Pos
+                FROM pbp
+                WHERE H5Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H6Name, H6Num, H6Pos
+                FROM pbp
+                WHERE H6Pos != 'G'
+                UNION ALL
+                
+                SELECT game_id, event_type, away_zone, A1Name, A1Num, A1Pos
+                FROM pbp
+                WHERE A1Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A2Name, A2Num, A2Pos
+                FROM pbp
+                WHERE A2Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A3Name, A3Num, A3Pos
+                FROM pbp
+                WHERE A3Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A4Name, A4Num, A4Pos
+                FROM pbp
+                WHERE A4Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A5Name, A5Num, A5Pos
+                FROM pbp
+                WHERE A5Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A6Name, A6Num, A6Pos
+                FROM pbp
+                WHERE A6Pos != 'G'
+                ) as p
+                
+            INNER JOIN rosters r 
+            ON (r.game_id=p.game_id
+                and r.name=p.name
+                and r.num=p.num)
+            ) as p
+            
+        WHERE (event_type='FAC' and zone ='DZ')
+        ) as p
+        
+    GROUP BY p.name) as dz
+ON dz.name=r.name
+
+LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as NZ_Faceoffs
+    FROM
+        (SELECT p.game_id, event_type, p.zone, p.name as name, p.pos as pos, p.team as team
+        
+        FROM 
+            (SELECT p.game_id, event_type, p.zone, p.name, r.Team as team, p.pos
+            
+            FROM
+                (SELECT game_id, event_type, home_zone as zone, H1Name as name, H1Num as num, H1Pos as pos
+                
+                FROM pbp
+                
+                WHERE H1Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H2Name, H2Num, H2Pos
+                FROM pbp
+                WHERE H2Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H3Name, H3Num, H3Pos
+                FROM pbp
+                WHERE H3Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H4Name, H4Num, H4Pos
+                FROM pbp
+                WHERE H4Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H5Name, H5Num, H5Pos
+                FROM pbp
+                WHERE H5Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, home_zone, H6Name, H6Num, H6Pos
+                FROM pbp
+                WHERE H6Pos != 'G'
+                UNION ALL
+                
+                SELECT game_id, event_type, away_zone, A1Name, A1Num, A1Pos
+                FROM pbp
+                WHERE A1Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A2Name, A2Num, A2Pos
+                FROM pbp
+                WHERE A2Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A3Name, A3Num, A3Pos
+                FROM pbp
+                WHERE A3Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A4Name, A4Num, A4Pos
+                FROM pbp
+                WHERE A4Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A5Name, A5Num, A5Pos
+                FROM pbp
+                WHERE A5Pos != 'G'
+                UNION ALL
+                SELECT game_id, event_type, away_zone, A6Name, A6Num, A6Pos
+                FROM pbp
+                WHERE A6Pos != 'G'
+                ) as p
+                
+            INNER JOIN rosters r 
+            ON (r.game_id=p.game_id
+                and r.name=p.name
+                and r.num=p.num)
+            ) as p
+            
+        WHERE (event_type='FAC' and zone ='NZ')
+        ) as p
+        
+    GROUP BY p.name) as nz
+ON nz.name=r.name
+
+LEFT OUTER JOIN (SELECT player, ROUND(SUM(duration)/60,2) as TOI
+    FROM shifts
+    GROUP BY player) as icetime
+ON icetime.player = r.name
 
 WHERE r.pos != 'G' 
     AND r.scratch is null
