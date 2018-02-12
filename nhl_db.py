@@ -283,15 +283,6 @@ GROUP BY z.season, r.name, r.pos
 
 ORDER BY P DESC, r.name;''', conn)
 
-# full list of goalies
-#goalies = pd.read_sql_query('''
-#SELECT DISTINCT r.name, pos
-#FROM rosters r INNER JOIN shifts s
-#ON r.name = s.player
-#WHERE r.pos = 'G'
-#	AND r.scratch != 'True'
-#	AND s.duration > 0
-#ORDER BY r.name;''', conn)
 
 skater_on_ice_counts = pd.read_sql_query('''
 SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, cf.CF, ca.CA, (CF/(CF+CA)) as 'CF%',
@@ -545,48 +536,48 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as CA
                 
                 WHERE H1Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H2Name, H2Num, H2Pos
+                SELECT game_id, event_type, p4_team, H2Name, H2Num, H2Pos
                 FROM pbp
                 WHERE H2Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H3Name, H3Num, H3Pos
+                SELECT game_id, event_type, p4_team, H3Name, H3Num, H3Pos
                 FROM pbp
                 WHERE H3Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H4Name, H4Num, H4Pos
+                SELECT game_id, event_type, p4_team, H4Name, H4Num, H4Pos
                 FROM pbp
                 WHERE H4Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H5Name, H5Num, H5Pos
+                SELECT game_id, event_type, p4_team, H5Name, H5Num, H5Pos
                 FROM pbp
                 WHERE H5Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H6Name, H6Num, H6Pos
+                SELECT game_id, event_type, p4_team, H6Name, H6Num, H6Pos
                 FROM pbp
                 WHERE H6Pos != 'G'
                 UNION ALL
                 
-                SELECT game_id, event_type, p1_team, p4_team, A1Name, A1Num, A1Pos
+                SELECT game_id, event_type, p4_team, A1Name, A1Num, A1Pos
                 FROM pbp
                 WHERE A1Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A2Name, A2Num, A2Pos
+                SELECT game_id, event_type, p4_team, A2Name, A2Num, A2Pos
                 FROM pbp
                 WHERE A2Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A3Name, A3Num, A3Pos
+                SELECT game_id, event_type, p4_team, A3Name, A3Num, A3Pos
                 FROM pbp
                 WHERE A3Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A4Name, A4Num, A4Pos
+                SELECT game_id, event_type, p4_team, A4Name, A4Num, A4Pos
                 FROM pbp
                 WHERE A4Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A5Name, A5Num, A5Pos
+                SELECT game_id, event_type, p4_team, A5Name, A5Num, A5Pos
                 FROM pbp
                 WHERE A5Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A6Name, A6Num, A6Pos
+                SELECT game_id, event_type, p4_team, A6Name, A6Num, A6Pos
                 FROM pbp
                 WHERE A6Pos != 'G'
                 ) as p
@@ -692,48 +683,48 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as SA
                 
                 WHERE H1Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H2Name, H2Num, H2Pos
+                SELECT game_id, event_type, p4_team, H2Name, H2Num, H2Pos
                 FROM pbp
                 WHERE H2Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H3Name, H3Num, H3Pos
+                SELECT game_id, event_type, p4_team, H3Name, H3Num, H3Pos
                 FROM pbp
                 WHERE H3Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H4Name, H4Num, H4Pos
+                SELECT game_id, event_type, p4_team, H4Name, H4Num, H4Pos
                 FROM pbp
                 WHERE H4Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H5Name, H5Num, H5Pos
+                SELECT game_id, event_type, p4_team, H5Name, H5Num, H5Pos
                 FROM pbp
                 WHERE H5Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H6Name, H6Num, H6Pos
+                SELECT game_id, event_type, p4_team, H6Name, H6Num, H6Pos
                 FROM pbp
                 WHERE H6Pos != 'G'
                 UNION ALL
                 
-                SELECT game_id, event_type, p1_team, p4_team, A1Name, A1Num, A1Pos
+                SELECT game_id, event_type, p4_team, A1Name, A1Num, A1Pos
                 FROM pbp
                 WHERE A1Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A2Name, A2Num, A2Pos
+                SELECT game_id, event_type, p4_team, A2Name, A2Num, A2Pos
                 FROM pbp
                 WHERE A2Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A3Name, A3Num, A3Pos
+                SELECT game_id, event_type, p4_team, A3Name, A3Num, A3Pos
                 FROM pbp
                 WHERE A3Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A4Name, A4Num, A4Pos
+                SELECT game_id, event_type, p4_team, A4Name, A4Num, A4Pos
                 FROM pbp
                 WHERE A4Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A5Name, A5Num, A5Pos
+                SELECT game_id, event_type, p4_team, A5Name, A5Num, A5Pos
                 FROM pbp
                 WHERE A5Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A6Name, A6Num, A6Pos
+                SELECT game_id, event_type, p4_team, A6Name, A6Num, A6Pos
                 FROM pbp
                 WHERE A6Pos != 'G'
                 ) as p
@@ -837,48 +828,48 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as GA
                 
                 WHERE H1Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H2Name, H2Num, H2Pos
+                SELECT game_id, event_type, p4_team, H2Name, H2Num, H2Pos
                 FROM pbp
                 WHERE H2Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H3Name, H3Num, H3Pos
+                SELECT game_id, event_type, p4_team, H3Name, H3Num, H3Pos
                 FROM pbp
                 WHERE H3Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H4Name, H4Num, H4Pos
+                SELECT game_id, event_type, p4_team, H4Name, H4Num, H4Pos
                 FROM pbp
                 WHERE H4Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H5Name, H5Num, H5Pos
+                SELECT game_id, event_type, p4_team, H5Name, H5Num, H5Pos
                 FROM pbp
                 WHERE H5Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, H6Name, H6Num, H6Pos
+                SELECT game_id, event_type, p4_team, H6Name, H6Num, H6Pos
                 FROM pbp
                 WHERE H6Pos != 'G'
                 UNION ALL
                 
-                SELECT game_id, event_type, p1_team, p4_team, A1Name, A1Num, A1Pos
+                SELECT game_id, event_type, p4_team, A1Name, A1Num, A1Pos
                 FROM pbp
                 WHERE A1Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A2Name, A2Num, A2Pos
+                SELECT game_id, event_type, p4_team, A2Name, A2Num, A2Pos
                 FROM pbp
                 WHERE A2Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A3Name, A3Num, A3Pos
+                SELECT game_id, event_type, p4_team, A3Name, A3Num, A3Pos
                 FROM pbp
                 WHERE A3Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A4Name, A4Num, A4Pos
+                SELECT game_id, event_type, p4_team, A4Name, A4Num, A4Pos
                 FROM pbp
                 WHERE A4Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A5Name, A5Num, A5Pos
+                SELECT game_id, event_type, p4_team, A5Name, A5Num, A5Pos
                 FROM pbp
                 WHERE A5Pos != 'G'
                 UNION ALL
-                SELECT game_id, event_type, p1_team, p4_team, A6Name, A6Num, A6Pos
+                SELECT game_id, event_type, p4_team, A6Name, A6Num, A6Pos
                 FROM pbp
                 WHERE A6Pos != 'G'
                 ) as p
@@ -905,4 +896,3 @@ ORDER BY cf.CF DESC, r.name
 ;''', conn)
 
 print(skater_on_ice_counts)
-
