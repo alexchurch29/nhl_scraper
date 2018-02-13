@@ -26,24 +26,15 @@ def scrape_games_by_date(start_date, end_date):
     :return: pd dataframe of rosters, shifts, pbp events, coaches, and officials for all games in given date range
     """
 
-    # read in existing dataframes from previous scrapes
-    r = pd.read_pickle('rosters.pickle')
-    s = pd.read_pickle('shifts.pickle')
-    p = pd.read_pickle('pbp.pickle')
-    c = pd.read_pickle('coaches.pickle')
-    o = pd.read_pickle('officials.pickle')
-
-    # create list of game id's for date range provided, along with list of previously scraped games to cross reference
+    # create list of game id's for date range provided
     schedule = html_schedule(start_date, end_date)
-    new_games = [row['Game_Id'] for index, row in schedule.iterrows() if row['Game_State'] == 'Final']
-    old_games = [row['Game_Id'] for index, row in r.iterrows()]
+    games = [row['Game_Id'] for index, row in schedule.iterrows() if row['Game_State'] == 'Final']
 
-    # add existing dataframes to list
-    rosters = [r]
-    coaches = [c]
-    officials = [o]
-    shifts = [s]
-    pbp = [p]
+    rosters = []
+    coaches = []
+    officials = []
+    shifts = []
+    pbp = []
 
     # track issues scraping certain games
     broken_shifts_games = []
@@ -51,27 +42,26 @@ def scrape_games_by_date(start_date, end_date):
     broken_roster_games = []
 
     # iterate through new games to scrape and append those dataframes to appropriate list
-    for game in new_games:
-        if game not in old_games:
-            try:
-                rosters.append(playing_roster(game)[0])
-                coaches.append(playing_roster(game)[1])
-                officials.append(playing_roster(game)[2])
-            except Exception as e:
-                print('Error for rosters for game {}'.format(game), e)
-                broken_roster_games.append(game)
+    for game in games:
+        try:
+            rosters.append(playing_roster(game)[0])
+            coaches.append(playing_roster(game)[1])
+            officials.append(playing_roster(game)[2])
+        except Exception as e:
+            print('Error for rosters for game {}'.format(game), e)
+            broken_roster_games.append(game)
 
-            try:
-                shifts.append(html_shifts(game))
-            except Exception as e:
-                print('Error for shifts for game {}'.format(game), e)
-                broken_shifts_games.append(game)
+        try:
+            shifts.append(html_shifts(game))
+        except Exception as e:
+            print('Error for shifts for game {}'.format(game), e)
+            broken_shifts_games.append(game)
 
-            try:
-                pbp.append(html_pbp(game))
-            except Exception as e:
-                print('Error for pbp for game {}'.format(game), e)
-                broken_pbp_games.append(game)
+        try:
+            pbp.append(html_pbp(game))
+        except Exception as e:
+            print('Error for pbp for game {}'.format(game), e)
+            broken_pbp_games.append(game)
 
     # add all newly scraped games to appropriate dataframe
     rosters = pd.concat(rosters, ignore_index=True)
@@ -80,7 +70,7 @@ def scrape_games_by_date(start_date, end_date):
     coaches = pd.concat(coaches, ignore_index=True)
     officials = pd.concat(officials, ignore_index=True)
 
-    # re-pickle all dataframes
+    # pickle all dataframes
     rosters.to_pickle('rosters.pickle')
     shifts.to_pickle('shifts.pickle')
     pbp.to_pickle('pbp.pickle')
@@ -134,16 +124,23 @@ def scrape_games_by_id(games):
             print('Error for pbp for game {}'.format(game), e)
             broken_pbp_games.append(game)
 
-    broken_games = dict()
-    broken_games['broken pbp'] = broken_pbp_games
-    broken_games['broken shifts'] = broken_shifts_games
-    broken_games['broken roster'] = broken_roster_games
-
     rosters = pd.concat(rosters, ignore_index=True)
     shifts = pd.concat(shifts, ignore_index=True)
     pbp = pd.concat(pbp, ignore_index=True)
     coaches = pd.concat(coaches, ignore_index=True)
     officials = pd.concat(officials, ignore_index=True)
+
+    # pickle all dataframes
+    rosters.to_pickle('rosters.pickle')
+    shifts.to_pickle('shifts.pickle')
+    pbp.to_pickle('pbp.pickle')
+    coaches.to_pickle('coaches.pickle')
+    officials.to_pickle('officials.pickle')
+
+    broken_games = dict()
+    broken_games['broken pbp'] = broken_pbp_games
+    broken_games['broken shifts'] = broken_shifts_games
+    broken_games['broken roster'] = broken_roster_games
 
     return rosters, shifts, pbp, coaches, officials
 
@@ -170,4 +167,4 @@ def convert_to_csv():
 
 
 # scrape_schedule('2017-10-01', '2018-05-01')
-# scrape_games_by_date('2018-01-13', '2018-01-28')
+# scrape_games_by_date('2018-01-29', '2018-02-11')

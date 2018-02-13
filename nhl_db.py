@@ -1,10 +1,14 @@
 import sqlite3
 import pandas as pd
+from nhl_gamescraper import scrape_games_by_date
 
 conn = sqlite3.connect('nhl.db')
 cur = conn.cursor()
 
-def update():
+def update(start_date, end_date):
+
+    scrape_games_by_date(start_date, end_date)
+    
     # read in updated pandas dataframes from most recent scrape
     r = pd.read_pickle('rosters.pickle')
     s = pd.read_pickle('shifts.pickle')
@@ -14,11 +18,11 @@ def update():
     z = pd.read_pickle('schedule.pickle')
 
     # update existing tables in database
-    r.to_sql('rosters', conn, if_exists='replace')
-    s.to_sql('shifts', conn, if_exists='replace')
-    p.to_sql('pbp', conn, if_exists='replace')
-    c.to_sql('coaches', conn, if_exists='replace')
-    o.to_sql('officials', conn, if_exists='replace')
+    r.to_sql('rosters', conn, if_exists='append')
+    s.to_sql('shifts', conn, if_exists='append')
+    p.to_sql('pbp', conn, if_exists='append')
+    c.to_sql('coaches', conn, if_exists='append')
+    o.to_sql('officials', conn, if_exists='append')
     z.to_sql('schedule', conn, if_exists='replace')
 
 # creates full list of skaters
@@ -1114,5 +1118,3 @@ GROUP BY z.season, r.name, r.pos
 ORDER BY cf.CF DESC, r.name
     
 ;''', conn)
-
-print(skater_on_ice_counts)
