@@ -164,7 +164,3 @@ def convert_to_csv():
     c.to_csv('coaches.csv', index=False)
     o.to_csv('officials.csv', index=False)
     z.to_csv('schedule.csv', index=False)
-
-
-# scrape_schedule('2017-10-01', '2018-05-01')
-# scrape_games_by_date('2018-01-29', '2018-02-11')

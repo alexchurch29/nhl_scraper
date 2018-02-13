@@ -1,14 +1,15 @@
 import sqlite3
 import pandas as pd
-from nhl_gamescraper import scrape_games_by_date
+from nhl_gamescraper import scrape_games_by_date, scrape_schedule
 
 conn = sqlite3.connect('nhl.db')
 cur = conn.cursor()
 
 def update(start_date, end_date):
 
+    scrape_schedule('2017-10-01', '2018-05-01')
     scrape_games_by_date(start_date, end_date)
-    
+
     # read in updated pandas dataframes from most recent scrape
     r = pd.read_pickle('rosters.pickle')
     s = pd.read_pickle('shifts.pickle')
@@ -25,8 +26,6 @@ def update(start_date, end_date):
     o.to_sql('officials', conn, if_exists='append')
     z.to_sql('schedule', conn, if_exists='replace')
 
-# creates full list of skaters
-# NAME, SEASON**, TEAM*, POS, GP, TOI, G
 # to aggregate for multi player teams add r.team to GROUP BY
 # to aggregate for multiple seasons remove z.season from GROUP BY
 skaters_individual_counts = pd.read_sql_query ('''
@@ -292,8 +291,8 @@ skater_on_ice_counts = pd.read_sql_query('''
 SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, cf.CF, ca.CA, round(cf.CF,2)/(round(cf.CF,2)
 +round(ca.CA,2)) as 'CF%', ff.FF, fa.FA, round(ff.FF,2)/(round(ff.FF,2)+round(fa.FA,2)) as 'FF%', sf.SF, sa.SA, 
 round(sf.SF,2)/(round(sf.SF,2)+round(sa.SA,2)) as 'SF%', gf.GF, ga.GA, round(gf.GF,2)/(round(gf.GF,2)
-+round(ga.GA,2)) as 'GF%', round(gf.GF,2)/(round(gf.GF,2)+round(sf.SF,2)) as 'On-Ice SH%', 
-1 - (round(ga.GA,2)/(round(ga.GA,2)+round(sa.SA,2))) as 'On-Ice SV%', (round(gf.GF,2)/(round(gf.GF,2)+round(sf.SF,2)))+
++round(ga.GA,2)) as 'GF%', round(gf.GF,2)/(round(gf.GF,2)+round(sf.SF,2)) as 'On_Ice_SH%', 
+1 - (round(ga.GA,2)/(round(ga.GA,2)+round(sa.SA,2))) as 'On_Ice_SV%', (round(gf.GF,2)/(round(gf.GF,2)+round(sf.SF,2)))+
 (1- (round(ga.GA,2)/(round(ga.GA,2)+round(sa.SA,2)))) as PDO, oz.OZ_Faceoffs, dz.DZ_Faceoffs, nz.NZ_Faceoffs
 
 FROM rosters r 
@@ -1118,3 +1117,6 @@ GROUP BY z.season, r.name, r.pos
 ORDER BY cf.CF DESC, r.name
     
 ;''', conn)
+
+skater_on_ice_counts.to_sql('skaters_on_ice_counts', conn, if_exists='replace')
+skaters_individual_counts.to_sql('skaters_individual_counts', conn, if_exists='replace')
