@@ -5,38 +5,23 @@ from nhl_gamescraper import scrape_games_by_date, scrape_schedule
 conn = sqlite3.connect('nhl.db')
 cur = conn.cursor()
 
-def update(start_date, end_date):
-
-    scrape_schedule('2017-10-01', '2018-05-01')
-    scrape_games_by_date(start_date, end_date)
-
-    # read in updated pandas dataframes from most recent scrape
-    r = pd.read_pickle('rosters.pickle')
-    s = pd.read_pickle('shifts.pickle')
-    p = pd.read_pickle('pbp.pickle')
-    c = pd.read_pickle('coaches.pickle')
-    o = pd.read_pickle('officials.pickle')
-    z = pd.read_pickle('schedule.pickle')
-
-    # update existing tables in database
-    r.to_sql('rosters', conn, if_exists='append')
-    s.to_sql('shifts', conn, if_exists='append')
-    p.to_sql('pbp', conn, if_exists='append')
-    c.to_sql('coaches', conn, if_exists='append')
-    o.to_sql('officials', conn, if_exists='append')
-    z.to_sql('schedule', conn, if_exists='replace')
-
 # to aggregate for multi player teams add r.team to GROUP BY
 # to aggregate for multiple seasons remove z.season from GROUP BY
 skaters_individual_counts = pd.read_sql_query ('''
-SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, goal.G, assist1.A1, assist2.A2, 
-    (assist1.A1 + assist2.A2) as A,  (goal.G + (assist1.A1 + assist2.A2)) as P, (goal.G + assist1.A1) as P1,
-    (goal.G + shots.SH) as SH, (round(goal.G,2)  / (round(shots.SH,2) + round(goal.G,2))) as 'SH%', missed.MISS as 
-    MISS, blocked.BLOCK as BLOCKED, (shots.SH + missed.MISS + blocked.BLOCK) as iCF, (shots.SH + missed.MISS) as iFF, 
-    pim.PIM, penl.PENL_Taken, min.Minor, maj.Major, misc.Misconduct, pend.PENL_Drawn, give.Giveaways, take.Takeaways,
-    hit.hits, hittaken.Hits_Taken, blocksfor.Shot_Blocks, faceoffwon.Faceoffs_Won, faceofflost.Faceoffs_Lost, 
-    (round(faceoffwon.Faceoffs_Won, 2) / (round(faceoffwon.Faceoffs_Won, 2) + round(faceofflost.Faceoffs_Lost, 2))) 
-    as 'Faceoff%'
+SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, ifnull(goal.G,0) as G, ifnull(assist1.A1,0) 
+    as A1, ifnull(assist2.A2,0) as A2, (ifnull(assist1.A1,0) + ifnull(assist2.A2,0)) as A, 
+    (ifnull(goal.G,0) + (ifnull(assist1.A1,0) + ifnull(assist2.A2,0))) as P, (ifnull(goal.G,0) + ifnull(assist1.A1,0)) 
+    as P1, (ifnull(goal.G,0) + ifnull(shots.SH,0)) as SH, ifnull((round(ifnull(goal.G,0),2)  / 
+    (round(ifnull(shots.SH,0),2) + round(ifnull(goal.G,0),2))),0) as 'SH%', ifnull(missed.MISS,0) as MISS, 
+    ifnull(blocked.BLOCK,0) as BLOCKED, (ifnull(shots.SH,0) + ifnull(missed.MISS,0) + ifnull(blocked.BLOCK,0)) as iCF, 
+    (ifnull(shots.SH,0) + ifnull(missed.MISS,0)) as iFF, ifnull(pim.PIM,0) as PIM, 
+    ifnull(penl.PENL_Taken,0) as PENL_Taken, ifnull(min.Minor,0) as Minor, ifnull(maj.Major,0) as Major, 
+    ifnull(misc.Misconduct,0) as Misconduct, ifnull(pend.PENL_Drawn,0) as PENL_Drawn, 
+    ifnull(give.Giveaways,0) as Giveaways, ifnull(take.Takeaways,0) as Takeaways, ifnull(hit.hits,0) as Hits, 
+    ifnull(hittaken.Hits_Taken,0) as Hits_Taken, ifnull(blocksfor.Shot_Blocks,0) as Shot_Blocks, 
+    ifnull(faceoffwon.Faceoffs_Won,0) as Faceoffs_Won, ifnull(faceofflost.Faceoffs_Lost,0) as Faceoffs_Lost, 
+    ifnull((round(ifnull(faceoffwon.Faceoffs_Won,0), 2) / (round(ifnull(faceoffwon.Faceoffs_Won,0), 2) + 
+    round(ifnull(faceofflost.Faceoffs_Lost,0), 2))),0) as 'Faceoff%'
 
 FROM rosters r 
 
@@ -288,12 +273,16 @@ ORDER BY P DESC, r.name;''', conn)
 
 
 skater_on_ice_counts = pd.read_sql_query('''
-SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, cf.CF, ca.CA, round(cf.CF,2)/(round(cf.CF,2)
-+round(ca.CA,2)) as 'CF%', ff.FF, fa.FA, round(ff.FF,2)/(round(ff.FF,2)+round(fa.FA,2)) as 'FF%', sf.SF, sa.SA, 
-round(sf.SF,2)/(round(sf.SF,2)+round(sa.SA,2)) as 'SF%', gf.GF, ga.GA, round(gf.GF,2)/(round(gf.GF,2)
-+round(ga.GA,2)) as 'GF%', round(gf.GF,2)/(round(gf.GF,2)+round(sf.SF,2)) as 'On_Ice_SH%', 
-1 - (round(ga.GA,2)/(round(ga.GA,2)+round(sa.SA,2))) as 'On_Ice_SV%', (round(gf.GF,2)/(round(gf.GF,2)+round(sf.SF,2)))+
-(1- (round(ga.GA,2)/(round(ga.GA,2)+round(sa.SA,2)))) as PDO, oz.OZ_Faceoffs, dz.DZ_Faceoffs, nz.NZ_Faceoffs
+SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, ifnull(cf.CF,0) as CF, ifnull(ca.CA,0) as CA, 
+ifnull(round(ifnull(cf.CF,0),2) / (round(ifnull(cf.CF,0),2) + round(ifnull(ca.CA,0),2)),0) as 'CF%', ifnull(ff.FF,0) as FF, 
+ifnull(fa.FA,0) as FA, ifnull(round(ifnull(ff.FF,0),2) / (round(ifnull(ff.FF,0),2) + round(ifnull(fa.FA,0),2)),0) as 'FF%', 
+ifnull(sf.SF,0) as SF, ifnull(sa.SA,0) as SA, ifnull(round(ifnull(sf.SF,0),2) / (round(ifnull(sf.SF,0),2) + round(ifnull(sa.SA,0),2)),0) 
+as 'SF%', ifnull(gf.GF,0) as GF, ifnull(ga.GA,0) as GA, ifnull(round(ifnull(gf.GF,0),2) / (round(ifnull(gf.GF,0),2)
++ round(ifnull(ga.GA,0),2)),0) as 'GF%', ifnull(round(ifnull(gf.GF,0),2) / (round(ifnull(gf.GF,0),2) + round(ifnull(sf.SF,0),2)),0)
+as 'On_Ice_SH%', ifnull(1 - (round(ifnull(ga.GA,0),2) / (round(ifnull(ga.GA,0),2) + round(ifnull(sa.SA,0),2))),1) as 'On_Ice_SV%', 
+ifnull((round(ifnull(gf.GF,0),2) / (round(ifnull(gf.GF,0),2) + round(ifnull(sf.SF,0),2))) + (1 - (round(ifnull(ga.GA,0),2) / 
+(round(ifnull(ga.GA,0),2) + round(ifnull(sa.SA,0),2)))),0) as PDO, ifnull(oz.OZ_Faceoffs,0) as OZ_Faceoffs, 
+ifnull(dz.DZ_Faceoffs,0) as DZ_Faceoffs, ifnull(nz.NZ_Faceoffs,0) as NZ_Faceoffs
 
 FROM rosters r 
 
@@ -1118,5 +1107,29 @@ ORDER BY cf.CF DESC, r.name
     
 ;''', conn)
 
-skater_on_ice_counts.to_sql('skaters_on_ice_counts', conn, if_exists='replace')
-skaters_individual_counts.to_sql('skaters_individual_counts', conn, if_exists='replace')
+
+def update(start_date, end_date):
+
+    scrape_schedule('2017-10-01', '2018-05-01')
+    scrape_games_by_date(start_date, end_date)
+
+    # read in updated pandas dataframes from most recent scrape
+    r = pd.read_pickle('rosters.pickle')
+    s = pd.read_pickle('shifts.pickle')
+    p = pd.read_pickle('pbp.pickle')
+    c = pd.read_pickle('coaches.pickle')
+    o = pd.read_pickle('officials.pickle')
+    z = pd.read_pickle('schedule.pickle')
+
+    # update existing tables in database
+    r.to_sql('rosters', conn, if_exists='append')
+    s.to_sql('shifts', conn, if_exists='append')
+    p.to_sql('pbp', conn, if_exists='append')
+    c.to_sql('coaches', conn, if_exists='append')
+    o.to_sql('officials', conn, if_exists='append')
+    z.to_sql('schedule', conn, if_exists='replace')
+    skater_on_ice_counts.to_sql('skaters_on_ice_counts', conn, if_exists='replace')
+    skaters_individual_counts.to_sql('skaters_individual_counts', conn, if_exists='replace')
+
+
+#update('2018-02-12', '2018-02-13')
