@@ -278,11 +278,10 @@ ifnull(round(ifnull(cf.CF,0),2) / (round(ifnull(cf.CF,0),2) + round(ifnull(ca.CA
 ifnull(fa.FA,0) as FA, ifnull(round(ifnull(ff.FF,0),2) / (round(ifnull(ff.FF,0),2) + round(ifnull(fa.FA,0),2)),0) as 'FF%', 
 ifnull(sf.SF,0) as SF, ifnull(sa.SA,0) as SA, ifnull(round(ifnull(sf.SF,0),2) / (round(ifnull(sf.SF,0),2) + round(ifnull(sa.SA,0),2)),0) 
 as 'SF%', ifnull(gf.GF,0) as GF, ifnull(ga.GA,0) as GA, ifnull(round(ifnull(gf.GF,0),2) / (round(ifnull(gf.GF,0),2)
-+ round(ifnull(ga.GA,0),2)),0) as 'GF%', ifnull(round(ifnull(gf.GF,0),2) / (round(ifnull(gf.GF,0),2) + round(ifnull(sf.SF,0),2)),0)
-as 'On_Ice_SH%', ifnull(1 - (round(ifnull(ga.GA,0),2) / (round(ifnull(ga.GA,0),2) + round(ifnull(sa.SA,0),2))),1) as 'On_Ice_SV%', 
-ifnull((round(ifnull(gf.GF,0),2) / (round(ifnull(gf.GF,0),2) + round(ifnull(sf.SF,0),2))) + (1 - (round(ifnull(ga.GA,0),2) / 
-(round(ifnull(ga.GA,0),2) + round(ifnull(sa.SA,0),2)))),0) as PDO, ifnull(oz.OZ_Faceoffs,0) as OZ_Faceoffs, 
-ifnull(dz.DZ_Faceoffs,0) as DZ_Faceoffs, ifnull(nz.NZ_Faceoffs,0) as NZ_Faceoffs
++ round(ifnull(ga.GA,0),2)),0) as 'GF%', ifnull(round(ifnull(gf.GF,0),2) / (round(ifnull(sf.SF,0),2)),0) as 'On_Ice_SH%', 
+ifnull(1 - (round(ifnull(ga.GA,0),2) / (round(ifnull(sa.SA,0),2))),1) as 'On_Ice_SV%', ifnull(round(ifnull(gf.GF,0),2) / 
+(round(ifnull(sf.SF,0),2)),0) + ifnull(1 - (round(ifnull(ga.GA,0),2) / (round(ifnull(sa.SA,0),2))),1) as PDO, 
+ifnull(oz.OZ_Faceoffs,0) as OZ_Faceoffs, ifnull(dz.DZ_Faceoffs,0) as DZ_Faceoffs, ifnull(nz.NZ_Faceoffs,0) as NZ_Faceoffs
 
 FROM rosters r 
 
@@ -1133,3 +1132,5 @@ def update(start_date, end_date):
 
 
 #update('2018-02-12', '2018-02-13')
+skater_on_ice_counts.to_sql('skaters_on_ice_counts', conn, if_exists='replace')
+skaters_individual_counts.to_sql('skaters_individual_counts', conn, if_exists='replace')
