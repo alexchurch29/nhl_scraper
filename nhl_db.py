@@ -1165,7 +1165,3 @@ def convert_to_csv():
 
 
 #update('2018-02-14', '2018-02-14')
-skater_on_ice_counts.to_sql('skaters_on_ice_counts', conn, if_exists='replace')
-skaters_individual_counts.to_sql('skaters_individual_counts', conn, if_exists='replace')
-skater_on_ice_counts.to_csv('skaters_on_ice_counts.csv', index=False)
-skaters_individual_counts.to_csv('skaters_individual_counts.csv', index=False)
