@@ -5,19 +5,6 @@ from nhl_pbphtml import parse_pbp as html_pbp
 from nhl_schedule import scrape_schedule as html_schedule
 
 
-def scrape_schedule(start_date, end_date):
-    """
-    Scrape schedule for given date_range
-    :param start_date: start date
-    :param end_date: end date
-    :return: pickle file containing pd dataframe of schedule for given date range
-    """
-
-    schedule = html_schedule(start_date, end_date)
-    schedule.to_pickle('schedule.pickle')
-    return schedule
-
-
 def scrape_games_by_date(start_date, end_date):
     """
     Scrapes all games for given date range
@@ -76,6 +63,7 @@ def scrape_games_by_date(start_date, end_date):
     pbp.to_pickle('pbp.pickle')
     coaches.to_pickle('coaches.pickle')
     officials.to_pickle('officials.pickle')
+    schedule.to_pickle('schedule.pickle')
 
     broken_games = dict()
     broken_games['broken pbp'] = broken_pbp_games
@@ -144,23 +132,5 @@ def scrape_games_by_id(games):
 
     return rosters, shifts, pbp, coaches, officials
 
-
-def convert_to_csv():
-    """
-    Used to convert all pickle files of pd dataframes into csv files
-    :return: csv file of rosters, shifts, pbp, coaches, officials, schedule
-    """
-    
-    r = pd.read_pickle('rosters.pickle')
-    s = pd.read_pickle('shifts.pickle')
-    p = pd.read_pickle('pbp.pickle')
-    c = pd.read_pickle('coaches.pickle')
-    o = pd.read_pickle('officials.pickle')
-    z = pd.read_pickle('schedule.pickle')
-
-    r.to_csv('rosters.csv', index=False)
-    s.to_csv('shifts.csv', index=False)
-    p.to_csv('pbp.csv', index=False)
-    c.to_csv('coaches.csv', index=False)
-    o.to_csv('officials.csv', index=False)
-    z.to_csv('schedule.csv', index=False)
+#scrape_schedule('2016-10-01', '2017-07-01')
+#scrape_games_by_date('2016-10-01', '2017-07-01')

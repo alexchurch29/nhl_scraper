@@ -1,14 +1,10 @@
 import sqlite3
 import pandas as pd
-from nhl_gamescraper import scrape_games_by_date, scrape_schedule
+from nhl_gamescraper import scrape_games_by_date
 
 conn = sqlite3.connect('nhl.db')
 cur = conn.cursor()
 
-# to split for multi-team players add r.team to GROUP BY
-# to split for multiple seasons remove z.season from GROUP BY
-# to search for specific player(s) add r.name IN (*list of names*) to WHERE
-# to filter by position as r.pos IN (*list of positions*) to WHERE
 skaters_individual_counts = pd.read_sql_query ('''
 SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, ifnull(goal.G,0) as G, ifnull(assist1.A1,0) 
     as A1, ifnull(assist2.A2,0) as A2, (ifnull(assist1.A1,0) + ifnull(assist2.A2,0)) as A, 
@@ -1119,7 +1115,6 @@ ORDER BY cf.CF DESC, r.name
 
 def update(start_date, end_date):
 
-    scrape_schedule('2017-10-01', '2018-05-01')
     scrape_games_by_date(start_date, end_date)
 
     # read in updated pandas dataframes from most recent scrape
@@ -1128,17 +1123,20 @@ def update(start_date, end_date):
     p = pd.read_pickle('pbp.pickle')
     c = pd.read_pickle('coaches.pickle')
     o = pd.read_pickle('officials.pickle')
-    z = pd.read_pickle('schedule.pickle')
+    new_sched = pd.read_pickle('schedule.pickle')
 
     # update existing tables in database
-    r.to_sql('rosters', conn, if_exists='append')
-    s.to_sql('shifts', conn, if_exists='append')
-    p.to_sql('pbp', conn, if_exists='append')
-    c.to_sql('coaches', conn, if_exists='append')
-    o.to_sql('officials', conn, if_exists='append')
-    z.to_sql('schedule', conn, if_exists='replace')
-    skater_on_ice_counts.to_sql('skaters_on_ice_counts', conn, if_exists='replace')
-    skaters_individual_counts.to_sql('skaters_individual_counts', conn, if_exists='replace')
+    old_sched = pd.read_sql('schedule', conn)
+    schedule = pd.concat([old_sched, new_sched], ignore_index=True)
+    schedule.drop_duplicates(subset=['game_id'], keep='last')
+    schedule.to_sql('schedule', conn, if_exists='replace', index=False)
+    r.to_sql('rosters', conn, if_exists='append', index=False)
+    s.to_sql('shifts', conn, if_exists='append', index=False)
+    p.to_sql('pbp', conn, if_exists='append', index=False)
+    c.to_sql('coaches', conn, if_exists='append', index=False)
+    o.to_sql('officials', conn, if_exists='append', index=False)
+    skater_on_ice_counts.to_sql('skaters_on_ice_counts', conn, if_exists='replace', index=False)
+    skaters_individual_counts.to_sql('skaters_individual_counts', conn, if_exists='replace', index=False)
 
 
 def convert_to_csv():
@@ -1164,4 +1162,4 @@ def convert_to_csv():
     skaters_individual_counts.to_csv('skaters_individual_counts.csv', index=False)
 
 
-#update('2018-02-14', '2018-02-14')
+#update('2018-02-15', '2018-02-15')
