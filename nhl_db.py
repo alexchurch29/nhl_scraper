@@ -5,8 +5,10 @@ from nhl_gamescraper import scrape_games_by_date, scrape_schedule
 conn = sqlite3.connect('nhl.db')
 cur = conn.cursor()
 
-# to aggregate for multi player teams add r.team to GROUP BY
-# to aggregate for multiple seasons remove z.season from GROUP BY
+# to split for multi-team players add r.team to GROUP BY
+# to split for multiple seasons remove z.season from GROUP BY
+# to search for specific player(s) add r.name IN (*list of names*) to WHERE
+# to filter by position as r.pos IN (*list of positions*) to WHERE
 skaters_individual_counts = pd.read_sql_query ('''
 SELECT r.name, z.season, r.team, r.pos, COUNT(r.name) as GP, icetime.TOI, ifnull(goal.G,0) as G, ifnull(assist1.A1,0) 
     as A1, ifnull(assist2.A2,0) as A2, (ifnull(assist1.A1,0) + ifnull(assist2.A2,0)) as A, 
@@ -28,13 +30,17 @@ FROM rosters r
 INNER JOIN schedule z 
 ON r.game_id = z.game_id
 
-INNER JOIN (SELECT player, ROUND(SUM(duration)/60,2) as TOI
-    FROM shifts
-    GROUP BY player) as icetime
-ON icetime.player = r.name
+LEFT OUTER JOIN (SELECT r.name, ROUND(SUM(duration)/60,2) as TOI, r.pos as position
+    FROM shifts s 
+	INNER JOIN rosters r
+	ON (s.player = r.name 
+	    and s.team = r.team 
+	    and s.game_id = r.game_id)
+    GROUP BY name, pos) as icetime
+ON icetime.name = r.name and icetime.position = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as G
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as G, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -42,11 +48,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as G
         and r.num=p.p1_num)
     WHERE p.event_type = 'GOAL'
         and p.period != 5)
-    GROUP BY name) as goal
-ON goal.name = r.name
+    GROUP BY name, pos) as goal
+ON goal.name = r.name and goal.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as A1
-    FROM (SELECT r.name, p.p2_team, p.p2_num
+LEFT OUTER JOIN (SELECT name, count(name) as A1, pos
+    FROM (SELECT r.name, p.p2_team, p.p2_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -54,11 +60,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as A1
         and r.num=p.p2_num)
     WHERE p.event_type = 'GOAL'
         and p.period != 5)
-    GROUP BY name) as assist1
-ON assist1.name = r.name
+    GROUP BY name, pos) as assist1
+ON assist1.name = r.name and assist1.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as A2
-    FROM (SELECT r.name, p.p3_team, p.p3_num
+LEFT OUTER JOIN (SELECT name, count(name) as A2, pos
+    FROM (SELECT r.name, p.p3_team, p.p3_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -66,11 +72,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as A2
         and r.num=p.p3_num)
     WHERE p.event_type = 'GOAL'
         and p.period != 5)
-    GROUP BY name) as assist2
-ON assist2.name = r.name
+    GROUP BY name, pos) as assist2
+ON assist2.name = r.name and assist2.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as SH
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as SH, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -78,11 +84,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as SH
         and r.num=p.p1_num)
     WHERE p.event_type = 'SHOT'
         and p.period != 5)
-    GROUP BY name) as shots
-ON shots.name = r.name
+    GROUP BY name, pos) as shots
+ON shots.name = r.name and shots.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as MISS
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as MISS, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -90,11 +96,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as MISS
         and r.num=p.p1_num)
     WHERE p.event_type = 'MISS'
         and p.period != 5)
-    GROUP BY name) as missed
-ON missed.name = r.name
+    GROUP BY name, pos) as missed
+ON missed.name = r.name and missed.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as BLOCK
-    FROM (SELECT r.name, p.p2_team, p.p2_num
+LEFT OUTER JOIN (SELECT name, count(name) as BLOCK, pos
+    FROM (SELECT r.name, p.p2_team, p.p2_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -102,11 +108,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as BLOCK
         and r.num=p.p2_num)
     WHERE p.event_type = 'BLOCK'
         and p.period != 5)
-    GROUP BY name) as blocked
-ON blocked.name = r.name
+    GROUP BY name, pos) as blocked
+ON blocked.name = r.name and blocked.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, sum(penl_length) as PIM
-    FROM (SELECT r.name, p.p1_team, p.p1_num, p.penl_length
+LEFT OUTER JOIN (SELECT name, sum(penl_length) as PIM, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, p.penl_length, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -114,11 +120,11 @@ LEFT OUTER JOIN (SELECT name, sum(penl_length) as PIM
         and r.num=p.p1_num)
     WHERE p.event_type = 'PENL'
         and p.period != 5)
-    GROUP BY name) as pim
-ON pim.name = r.name
+    GROUP BY name, pos) as pim
+ON pim.name = r.name and pim.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as PENL_Taken
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as PENL_Taken, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -126,11 +132,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as PENL_Taken
         and r.num=p.p1_num)
     WHERE p.event_type = 'PENL'
         and p.period != 5)
-    GROUP BY name) as penl
-ON penl.name = r.name
+    GROUP BY name, pos) as penl
+ON penl.name = r.name and penl.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as Minor
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as Minor, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -139,11 +145,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as Minor
     WHERE p.event_type = 'PENL'
         and p.penl_length = 2
         and p.period != 5)
-    GROUP BY name) as min
-ON min.name = r.name
+    GROUP BY name, pos) as min
+ON min.name = r.name and min.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as Major
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as Major, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -152,11 +158,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as Major
     WHERE p.event_type = 'PENL'
         and p.penl_length = 5
         and p.period != 5)
-    GROUP BY name) as maj
-ON maj.name = r.name
+    GROUP BY name, pos) as maj
+ON maj.name = r.name and maj.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as Misconduct
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as Misconduct, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -165,11 +171,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as Misconduct
     WHERE p.event_type = 'PENL'
         and p.penl_length = 10
         and p.period != 5)
-    GROUP BY name) as misc
-ON misc.name = r.name
+    GROUP BY name, pos) as misc
+ON misc.name = r.name and misc.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as PENL_Drawn
-    FROM (SELECT r.name, p.p2_team, p.p2_num
+LEFT OUTER JOIN (SELECT name, count(name) as PENL_Drawn, pos
+    FROM (SELECT r.name, p.p2_team, p.p2_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -177,11 +183,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as PENL_Drawn
         and r.num=p.p2_num)
     WHERE p.event_type = 'PENL'
         and p.period != 5)
-    GROUP BY name) as pend
-ON pend.name = r.name
+    GROUP BY name, pos) as pend
+ON pend.name = r.name and pend.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as Giveaways
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as Giveaways, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -189,11 +195,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as Giveaways
         and r.num=p.p1_num)
     WHERE p.event_type = 'GIVE'
         and p.period != 5)
-    GROUP BY name) as give
-ON give.name = r.name
+    GROUP BY name, pos) as give
+ON give.name = r.name and give.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as Takeaways
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as Takeaways, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -201,11 +207,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as Takeaways
         and r.num=p.p1_num)
     WHERE p.event_type = 'TAKE'
         and p.period != 5)
-    GROUP BY name) as take
-ON take.name = r.name
+    GROUP BY name, pos) as take
+ON take.name = r.name and take.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as Hits
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as Hits, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -213,11 +219,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as Hits
         and r.num=p.p1_num)
     WHERE p.event_type = 'HIT'
         and p.period != 5)
-    GROUP BY name) as hit
-ON hit.name = r.name
+    GROUP BY name, pos) as hit
+ON hit.name = r.name and hit.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as Hits_Taken
-    FROM (SELECT r.name, p.p2_team, p.p2_num
+LEFT OUTER JOIN (SELECT name, count(name) as Hits_Taken, pos
+    FROM (SELECT r.name, p.p2_team, p.p2_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -225,11 +231,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as Hits_Taken
         and r.num=p.p2_num)
     WHERE p.event_type = 'HIT'
         and p.period != 5)
-    GROUP BY name) as hittaken
-ON hittaken.name = r.name
+    GROUP BY name, pos) as hittaken
+ON hittaken.name = r.name and hittaken.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as Shot_Blocks
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as Shot_Blocks, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -237,11 +243,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as Shot_Blocks
         and r.num=p.p1_num)
     WHERE p.event_type = 'BLOCK'
         and p.period != 5)
-    GROUP BY name) as blocksfor
-ON blocksfor.name = r.name
+    GROUP BY name, pos) as blocksfor
+ON blocksfor.name = r.name and blocksfor.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as Faceoffs_Won
-    FROM (SELECT r.name, p.p1_team, p.p1_num
+LEFT OUTER JOIN (SELECT name, count(name) as Faceoffs_Won, pos
+    FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -249,11 +255,11 @@ LEFT OUTER JOIN (SELECT name, count(name) as Faceoffs_Won
         and r.num=p.p1_num)
     WHERE p.event_type = 'FAC'
         and p.period != 5)
-    GROUP BY name) as faceoffwon
-ON faceoffwon.name = r.name
+    GROUP BY name, pos) as faceoffwon
+ON faceoffwon.name = r.name and faceoffwon.pos = r.pos
 
-LEFT OUTER JOIN (SELECT name, count(name) as Faceoffs_Lost
-    FROM (SELECT r.name, p.p2_team, p.p2_num
+LEFT OUTER JOIN (SELECT name, count(name) as Faceoffs_Lost, pos
+    FROM (SELECT r.name, p.p2_team, p.p2_num, r.pos
     FROM pbp p
     INNER JOIN rosters r
     ON (r.game_id = p.game_id
@@ -261,8 +267,8 @@ LEFT OUTER JOIN (SELECT name, count(name) as Faceoffs_Lost
         and r.num=p.p2_num)
     WHERE p.event_type = 'FAC'
         and p.period != 5)
-    GROUP BY name) as faceofflost
-ON faceofflost.name = r.name
+    GROUP BY name, pos) as faceofflost
+ON faceofflost.name = r.name and faceofflost.pos = r.pos
     
 WHERE r.pos != 'G' 
     AND r.scratch is null
@@ -288,10 +294,14 @@ FROM rosters r
 INNER JOIN schedule z 
 ON r.game_id = z.game_id
 
-INNER JOIN (SELECT player, ROUND(SUM(duration)/60,2) as TOI
-    FROM shifts
-    GROUP BY player) as icetime
-ON icetime.player = r.name
+LEFT OUTER JOIN (SELECT r.name, ROUND(SUM(duration)/60,2) as TOI, r.pos as position
+    FROM shifts s 
+	INNER JOIN rosters r
+	ON (s.player = r.name 
+	    and s.team = r.team 
+	    and s.game_id = r.game_id)
+    GROUP BY name, pos) as icetime
+ON icetime.name = r.name and icetime.position = r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as CF
     FROM
@@ -365,8 +375,8 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as CF
             or (event_type='BLOCK' and p2_team=p.team)
         ) as p
         
-    GROUP BY p.name) as cf
-ON CF.name=r.name
+    GROUP BY p.name, p.pos) as cf
+ON CF.name=r.name and cf.pos=r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as CA
     FROM
@@ -440,8 +450,8 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as CA
             or (event_type='BLOCK' and p1_team=p.team)
         ) as p
         
-    GROUP BY p.name) as ca
-ON CA.name=r.name
+    GROUP BY p.name, p.pos) as ca
+ON CA.name=r.name and CA.pos=r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as FF
     FROM
@@ -514,8 +524,8 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as FF
             or (event_type='SHOT' and p1_team=p.team)
         ) as p
         
-    GROUP BY p.name) as ff
-ON FF.name=r.name
+    GROUP BY p.name, p.pos) as ff
+ON FF.name=r.name and FF.pos=r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as FA
     FROM
@@ -588,8 +598,8 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as FA
             or (event_type='SHOT' and p4_team=p.team)
         ) as p
         
-    GROUP BY p.name) as fa
-ON FA.name=r.name
+    GROUP BY p.name, p.pos) as fa
+ON FA.name=r.name and FA.pos=r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as SF
     FROM
@@ -661,8 +671,8 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as SF
             or (event_type='SHOT' and p1_team=p.team)
         ) as p
         
-    GROUP BY p.name) as sf
-ON SF.name=r.name
+    GROUP BY p.name, p.pos) as sf
+ON SF.name=r.name and SF.pos=r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as SA
     FROM
@@ -734,8 +744,8 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as SA
             or (event_type='SHOT' and p4_team=p.team)
         ) as p
         
-    GROUP BY p.name) as sa
-ON SA.name=r.name
+    GROUP BY p.name, p.pos) as sa
+ON SA.name=r.name and SA.pos=r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as GF
     FROM
@@ -806,8 +816,8 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as GF
         WHERE (event_type='GOAL' and p1_team=p.team)
         ) as p
         
-    GROUP BY p.name) as gf
-ON GF.name=r.name
+    GROUP BY p.name, p.pos) as gf
+ON GF.name=r.name and GF.pos=r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as GA
     FROM
@@ -878,8 +888,8 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as GA
         WHERE (event_type='GOAL' and p4_team=p.team)
         ) as p
         
-    GROUP BY p.name) as ga
-ON GA.name=r.name
+    GROUP BY p.name, p.pos) as ga
+ON GA.name=r.name and GA.pos=r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as OZ_Faceoffs
     FROM
@@ -950,8 +960,8 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as OZ_Faceoff
         WHERE (event_type='FAC' and zone ='OZ')
         ) as p
         
-    GROUP BY p.name) as oz
-ON oz.name=r.name
+    GROUP BY p.name, p.pos) as oz
+ON oz.name=r.name and oz.pos=r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as DZ_Faceoffs
     FROM
@@ -1022,8 +1032,8 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as DZ_Faceoff
         WHERE (event_type='FAC' and zone ='DZ')
         ) as p
         
-    GROUP BY p.name) as dz
-ON dz.name=r.name
+    GROUP BY p.name, p.pos) as dz
+ON dz.name=r.name and dz.pos=r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as NZ_Faceoffs
     FROM
@@ -1094,8 +1104,8 @@ LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as NZ_Faceoff
         WHERE (event_type='FAC' and zone ='NZ')
         ) as p
         
-    GROUP BY p.name) as nz
-ON nz.name=r.name
+    GROUP BY p.name, p.pos) as nz
+ON nz.name=r.name and nz.pos=r.pos
 
 WHERE r.pos != 'G' 
     AND r.scratch is null
@@ -1131,6 +1141,31 @@ def update(start_date, end_date):
     skaters_individual_counts.to_sql('skaters_individual_counts', conn, if_exists='replace')
 
 
-#update('2018-02-12', '2018-02-13')
+def convert_to_csv():
+    """
+    Used to convert all pickle files of pd dataframes into csv files
+    :return: csv file of rosters, shifts, pbp, coaches, officials, schedule
+    """
+
+    r = pd.read_pickle('rosters.pickle')
+    s = pd.read_pickle('shifts.pickle')
+    p = pd.read_pickle('pbp.pickle')
+    c = pd.read_pickle('coaches.pickle')
+    o = pd.read_pickle('officials.pickle')
+    z = pd.read_pickle('schedule.pickle')
+
+    r.to_csv('rosters.csv', index=False)
+    s.to_csv('shifts.csv', index=False)
+    p.to_csv('pbp.csv', index=False)
+    c.to_csv('coaches.csv', index=False)
+    o.to_csv('officials.csv', index=False)
+    z.to_csv('schedule.csv', index=False)
+    skater_on_ice_counts.to_csv('skaters_on_ice_counts.csv', index=False)
+    skaters_individual_counts.to_csv('skaters_individual_counts.csv', index=False)
+
+
+#update('2018-02-14', '2018-02-14')
 skater_on_ice_counts.to_sql('skaters_on_ice_counts', conn, if_exists='replace')
 skaters_individual_counts.to_sql('skaters_individual_counts', conn, if_exists='replace')
+skater_on_ice_counts.to_csv('skaters_on_ice_counts.csv', index=False)
+skaters_individual_counts.to_csv('skaters_individual_counts.csv', index=False)
