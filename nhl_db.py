@@ -1115,15 +1115,15 @@ ORDER BY cf.CF DESC, r.name
 
 def update(start_date, end_date):
 
-    scrape_games_by_date(start_date, end_date)
+    game_data = scrape_games_by_date(start_date, end_date)
 
-    # read in updated pandas dataframes from most recent scrape
-    r = pd.read_pickle('rosters.pickle')
-    s = pd.read_pickle('shifts.pickle')
-    p = pd.read_pickle('pbp.pickle')
-    c = pd.read_pickle('coaches.pickle')
-    o = pd.read_pickle('officials.pickle')
-    new_sched = pd.read_pickle('schedule.pickle')
+    r = game_data[0]
+    s = game_data[1]
+    p = game_data[2]
+    c = game_data[3]
+    o = game_data[4]
+    i = game_data[5]
+    new_sched = game_data[6]
 
     # update existing tables in database
     old_sched = pd.read_sql('schedule', conn)
@@ -1135,6 +1135,7 @@ def update(start_date, end_date):
     p.to_sql('pbp', conn, if_exists='append', index=False)
     c.to_sql('coaches', conn, if_exists='append', index=False)
     o.to_sql('officials', conn, if_exists='append', index=False)
+    i.to_sql('players_on_ice', conn, if_exists='append', index=False)
     skater_on_ice_counts.to_sql('skaters_on_ice_counts', conn, if_exists='replace', index=False)
     skaters_individual_counts.to_sql('skaters_individual_counts', conn, if_exists='replace', index=False)
 
@@ -1145,12 +1146,13 @@ def convert_to_csv():
     :return: csv file of rosters, shifts, pbp, coaches, officials, schedule
     """
 
-    r = pd.read_pickle('rosters.pickle')
-    s = pd.read_pickle('shifts.pickle')
-    p = pd.read_pickle('pbp.pickle')
-    c = pd.read_pickle('coaches.pickle')
-    o = pd.read_pickle('officials.pickle')
-    z = pd.read_pickle('schedule.pickle')
+    r = pd.read_sql('rosters', conn)
+    s = pd.read_sql('shifts', conn)
+    p = pd.read_sql('pbp', conn)
+    c = pd.read_sql('coaches', conn)
+    o = pd.read_sql('officials', conn)
+    z = pd.read_sql('schedule', conn)
+    i = pd.read_sql('players_on_ice', conn)
 
     r.to_csv('rosters.csv', index=False)
     s.to_csv('shifts.csv', index=False)
@@ -1158,6 +1160,7 @@ def convert_to_csv():
     c.to_csv('coaches.csv', index=False)
     o.to_csv('officials.csv', index=False)
     z.to_csv('schedule.csv', index=False)
+    i.to_csv('players_on_ice.csv', index=False)
     skater_on_ice_counts.to_csv('skaters_on_ice_counts.csv', index=False)
     skaters_individual_counts.to_csv('skaters_individual_counts.csv', index=False)
 

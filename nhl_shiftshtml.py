@@ -120,7 +120,6 @@ def parse_html(html, game_id):
 def scrape_game(game_id):
     """
     Scrape the game.
-    Try the json first, if it's not there do the html (it should be there for all games)
     :param game_id: id for game
     :return: DataFrame with info for the game
     """
@@ -134,4 +133,22 @@ def scrape_game(game_id):
     game_df = game_df.sort_values(by=['Period', 'Start'], ascending=[True, True])  # Sort by period and by time
     game_df = game_df.reset_index(drop=True)
 
-    return game_df
+    # create second df to record list of players on ice at every second of the game
+    # this will be used to track ice time by game state
+    final_period = int(game_df['Period'].iloc[-1]) # returns final period of game
+    final_play = int(game_df['End'].iloc[-1]) # returns time of final play of game
+    # creates dict where each key represents a second in time for the given game
+    shifts_by_sec = {i: [] for i in range(1, (((final_period - 1) * 1200) + final_play + 1))}
+
+    # loop through each shift and return which players are on the ice at any given second in time
+    for index, row in game_df.iterrows():
+        for k, v in shifts_by_sec.items():
+            if (row['Start'] + (1200 * (int(row['Period']) - 1))+1) <= k <= (row['End'] + (1200 * (int(row['Period']) - 1))):
+                v.append(row['Player'])
+
+    players_on_ice = pd.DataFrame.from_dict(shifts_by_sec, orient='index')
+    players_on_ice['Game_Id'] = str(game_id)
+    players_on_ice['Time'] = players_on_ice.index
+    players_on_ice.reindex(columns=['Game_Id', 'Time', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10', 'P11', 'P12'])
+
+    return game_df, players_on_ice

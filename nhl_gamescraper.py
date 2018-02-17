@@ -21,6 +21,7 @@ def scrape_games_by_date(start_date, end_date):
     coaches = []
     officials = []
     shifts = []
+    players_on_ice = []
     pbp = []
 
     # track issues scraping certain games
@@ -39,7 +40,8 @@ def scrape_games_by_date(start_date, end_date):
             broken_roster_games.append(game)
 
         try:
-            shifts.append(html_shifts(game))
+            shifts.append(html_shifts(game)[0])
+            players_on_ice.append(html_shifts(game)[1])
         except Exception as e:
             print('Error for shifts for game {}'.format(game), e)
             broken_shifts_games.append(game)
@@ -53,17 +55,10 @@ def scrape_games_by_date(start_date, end_date):
     # add all newly scraped games to appropriate dataframe
     rosters = pd.concat(rosters, ignore_index=True)
     shifts = pd.concat(shifts, ignore_index=True)
+    players_on_ice = pd.concat(players_on_ice, ignore_index=True)
     pbp = pd.concat(pbp, ignore_index=True)
     coaches = pd.concat(coaches, ignore_index=True)
     officials = pd.concat(officials, ignore_index=True)
-
-    # pickle all dataframes
-    rosters.to_pickle('rosters.pickle')
-    shifts.to_pickle('shifts.pickle')
-    pbp.to_pickle('pbp.pickle')
-    coaches.to_pickle('coaches.pickle')
-    officials.to_pickle('officials.pickle')
-    schedule.to_pickle('schedule.pickle')
 
     broken_games = dict()
     broken_games['broken pbp'] = broken_pbp_games
@@ -71,7 +66,7 @@ def scrape_games_by_date(start_date, end_date):
     broken_games['broken roster'] = broken_roster_games
     print(broken_games)
 
-    return rosters, shifts, pbp, coaches, officials
+    return rosters, shifts, pbp, coaches, officials, players_on_ice, schedule
 
 
 def scrape_games_by_id(games):
@@ -85,6 +80,7 @@ def scrape_games_by_id(games):
     coaches = list()
     officials = list()
     shifts = list()
+    players_on_ice = list()
     pbp = list()
 
     broken_shifts_games = []
@@ -101,7 +97,8 @@ def scrape_games_by_id(games):
             broken_roster_games.append(game)
 
         try:
-            shifts.append(html_shifts(game))
+            shifts.append(html_shifts(game)[0])
+            players_on_ice.append(html_shifts(game)[1])
         except Exception as e:
             print('Error for shifts for game {}'.format(game), e)
             broken_shifts_games.append(game)
@@ -114,23 +111,17 @@ def scrape_games_by_id(games):
 
     rosters = pd.concat(rosters, ignore_index=True)
     shifts = pd.concat(shifts, ignore_index=True)
+    players_on_ice = pd.concat(players_on_ice, ignore_index=True)
     pbp = pd.concat(pbp, ignore_index=True)
     coaches = pd.concat(coaches, ignore_index=True)
     officials = pd.concat(officials, ignore_index=True)
-
-    # pickle all dataframes
-    rosters.to_pickle('rosters.pickle')
-    shifts.to_pickle('shifts.pickle')
-    pbp.to_pickle('pbp.pickle')
-    coaches.to_pickle('coaches.pickle')
-    officials.to_pickle('officials.pickle')
 
     broken_games = dict()
     broken_games['broken pbp'] = broken_pbp_games
     broken_games['broken shifts'] = broken_shifts_games
     broken_games['broken roster'] = broken_roster_games
 
-    return rosters, shifts, pbp, coaches, officials
+    return rosters, shifts, pbp, coaches, officials, players_on_ice
 
 #scrape_schedule('2016-10-01', '2017-07-01')
 #scrape_games_by_date('2016-10-01', '2017-07-01')
