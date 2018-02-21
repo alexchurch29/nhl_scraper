@@ -122,6 +122,3 @@ def scrape_games_by_id(games):
     broken_games['broken roster'] = broken_roster_games
 
     return rosters, shifts, pbp, coaches, officials, players_on_ice
-
-#scrape_schedule('2016-10-01', '2017-07-01')
-#scrape_games_by_date('2016-10-01', '2017-07-01')

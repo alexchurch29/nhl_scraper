@@ -145,10 +145,14 @@ def scrape_game(game_id):
         for k, v in shifts_by_sec.items():
             if (row['Start'] + (1200 * (int(row['Period']) - 1))+1) <= k <= (row['End'] + (1200 * (int(row['Period']) - 1))):
                 v.append(row['Player'])
+                v.append(row['Team'])
 
     players_on_ice = pd.DataFrame.from_dict(shifts_by_sec, orient='index')
     players_on_ice['Game_Id'] = str(game_id)
     players_on_ice['Time'] = players_on_ice.index
-    players_on_ice.reindex(columns=['Game_Id', 'Time', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10', 'P11', 'P12'])
+    columns=['Game_Id', 'Time', 'P1_Name', 'P1_Team', 'P2_Name', 'P2_Team', 'P3_Name', 'P3_Team', 'P4_Name', 'P4_Team',
+             'P5_Name', 'P5_Team', 'P6_Name', 'P6_Team', 'P7_Name', 'P7_Team', 'P8_Name', 'P8_Team', 'P9_Name',
+             'P9_Team', 'P10_Name', 'P10_Team', 'P11_Name', 'P11_Team', 'P12_Name', 'P12_Team', 'P13_Name', 'P13_Team']
+    players_on_ice.reindex_axis(columns, axis=1)
 
     return game_df, players_on_ice

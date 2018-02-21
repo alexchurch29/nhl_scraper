@@ -1112,6 +1112,205 @@ ORDER BY cf.CF DESC, r.name
     
 ;''', conn)
 
+players_on_ice = pd.read_sql_query ('''SELECT p.name, p.team, r.pos, round(count(p.name),2)/60 as TOI
+
+FROM (SELECT p.game_id as game_id, home_team, away_team, p.time as time, home_strength, away_strength, z.name as name, z.team as team
+
+FROM (SELECT p.game_id, p.home_team, p.away_team, p.time, p.strength as home_strength, q.strength as away_strength
+
+FROM (SELECT p.game_id, z.home_team, z.away_team, time, team, count(team) as strength
+
+FROM (SELECT r.name, r.pos, r.team, r.game_id, p.time
+
+FROM rosters r
+
+INNER JOIN(
+
+    SELECT game_id, time, "0" as name, "1" as team
+
+    FROM players_on_ice
+
+    UNION ALL
+    SELECT game_id, time, "2" as name, "3" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "4" as name, "5" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "6" as name, "7" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "8" as name, "9" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "10" as name, "11" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "12" as name, "13" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "14" as name, "15" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "16" as name, "17" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "18" as name, "19" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "20" as name, "21" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "22" as name, "23" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "24" as name, "25" as team
+    FROM players_on_ice
+
+    WHERE name IS NOT NULL) as p
+
+ON r.name=p.name 
+and r.game_id=p.game_id
+and r.team=p.team) as p
+
+INNER JOIN schedule z
+
+ON p.game_id=z.game_id
+
+WHERE pos != 'G'
+and z.home_team=p.team
+
+GROUP BY team, time, p.game_id) as p
+
+INNER JOIN (SELECT p.game_id, z.home_team, z.away_team, time, team, count(team) as strength
+
+FROM (SELECT r.name, r.pos, r.team, r.game_id, p.time
+
+FROM rosters r
+
+INNER JOIN(
+
+    SELECT game_id, time, "0" as name, "1" as team
+
+    FROM players_on_ice
+
+    UNION ALL
+    SELECT game_id, time, "2" as name, "3" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "4" as name, "5" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "6" as name, "7" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "8" as name, "9" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "10" as name, "11" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "12" as name, "13" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "14" as name, "15" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "16" as name, "17" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "18" as name, "19" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "20" as name, "21" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "22" as name, "23" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "24" as name, "25" as team
+    FROM players_on_ice
+
+    WHERE name IS NOT NULL) as p
+
+ON r.name=p.name 
+and r.game_id=p.game_id
+and r.team=p.team) as p
+
+INNER JOIN schedule z
+
+ON p.game_id=z.game_id
+
+WHERE pos != 'G'
+and z.away_team=p.team
+
+GROUP BY team, time, p.game_id) as q
+
+ON q.game_id=p.game_id and q.time=p.time) as p
+
+INNER JOIN (SELECT r.name, r.pos, r.team, r.game_id, p.time
+
+FROM rosters r
+
+INNER JOIN(
+
+    SELECT game_id, time, "0" as name, "1" as team
+
+    FROM players_on_ice
+
+    UNION ALL
+    SELECT game_id, time, "2" as name, "3" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "4" as name, "5" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "6" as name, "7" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "8" as name, "9" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "10" as name, "11" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "12" as name, "13" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "14" as name, "15" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "16" as name, "17" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "18" as name, "19" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "20" as name, "21" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "22" as name, "23" as team
+    FROM players_on_ice
+    UNION ALL
+    SELECT game_id, time, "24" as name, "25" as team
+    FROM players_on_ice
+
+    WHERE name IS NOT NULL) as p
+
+ON r.name=p.name 
+and r.game_id=p.game_id
+and r.team=p.team) as z
+
+ON z.game_id=p.game_id and z.time=p.time
+
+ORDER BY p.game_id, p.time, z.team, z.name) as p
+
+INNER JOIN rosters r 
+
+ON r.game_id=p.game_id and p.name=r.name and p.team=r.team
+
+GROUP BY p.name, r.pos;''', conn)
+
 
 def update(start_date, end_date):
 
