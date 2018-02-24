@@ -1265,7 +1265,6 @@ def update(start_date, end_date):
     p = game_data[2]
     c = game_data[3]
     o = game_data[4]
-    i = game_data[5]
     new_sched = game_data[6]
 
     # update schedule with games that have since gone final
@@ -1280,7 +1279,17 @@ def update(start_date, end_date):
     p.to_sql('pbp', conn, if_exists='append', index=False)
     c.to_sql('coaches', conn, if_exists='append', index=False)
     o.to_sql('officials', conn, if_exists='append', index=False)
-    i.to_sql('shifts_by_sec', conn, if_exists='append', index=False, chunksize=250000)
+
+    shifts_by_sec = pd.DataFrame(columns=['Game_Id', 'Time', 'Name', 'Team'])
+    for row in s.itertuples():
+        shift = pd.DataFrame({'Time': [i for i in range(int(row.Start) + 1200 * ((int(row.Period)) - 1) + 1,
+                                                        int(row.End) + 1200 * ((int(row.Period)) - 1) + 1)]})
+        shift['Game_Id'] = row.Game_Id
+        shift['Name'] = row.Player
+        shift['Team'] = row.Team
+        shifts_by_sec = shifts_by_sec.append(shift, ignore_index=True)
+    shifts_by_sec.to_sql('shifts_by_sec', conn, if_exists='append', index=False, chunksize=250000)
+
     t = shifts_by_sec_teams
     col = ['home_score', 'away_score']
     t[col] = t[col].ffill()

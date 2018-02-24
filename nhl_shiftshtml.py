@@ -133,26 +133,4 @@ def scrape_game(game_id):
     game_df = game_df.sort_values(by=['Period', 'Start'], ascending=[True, True])  # Sort by period and by time
     game_df = game_df.reset_index(drop=True)
 
-    # create second df to record list of players on ice at every second of the game
-    # this will be used to track ice time by game state
-    final_period = int(game_df['Period'].iloc[-1]) # returns final period of game
-    final_play = int(game_df['End'].iloc[-1]) # returns time of final play of game
-    # creates dict where each key represents a second in time for the given game
-    shifts_by_sec = {i: [] for i in range(1, (((final_period - 1) * 1200) + final_play + 1))}
-
-    # loop through each shift and return which players are on the ice at any given second in time
-    for index, row in game_df.iterrows():
-        for k, v in shifts_by_sec.items():
-            if (row['Start'] + (1200 * (int(row['Period']) - 1))+1) <= k <= (row['End'] + (1200 * (int(row['Period']) - 1))):
-                v.append(row['Player'])
-                v.append(row['Team'])
-
-    players_on_ice = pd.DataFrame.from_dict(shifts_by_sec, orient='index')
-    players_on_ice['Game_Id'] = str(game_id)
-    players_on_ice['Time'] = players_on_ice.index
-    columns=['Game_Id', 'Time', 'P1_Name', 'P1_Team', 'P2_Name', 'P2_Team', 'P3_Name', 'P3_Team', 'P4_Name', 'P4_Team',
-             'P5_Name', 'P5_Team', 'P6_Name', 'P6_Team', 'P7_Name', 'P7_Team', 'P8_Name', 'P8_Team', 'P9_Name',
-             'P9_Team', 'P10_Name', 'P10_Team', 'P11_Name', 'P11_Team', 'P12_Name', 'P12_Team', 'P13_Name', 'P13_Team']
-    players_on_ice.reindex_axis(columns, axis=1)
-
-    return game_df, players_on_ice
+    return game_df
