@@ -4,4 +4,4 @@ The code borrows heavily from the NHL Scraper repository created by Harry Shomer
 
 Json script files have been included in the repo as well, however, I have opted to scrape and parse the html files instead in most cases, as the json data seems to be unreliable on a game-by-game basis. 
 
-The scraper should currently for all games from the 2009 season onward. Looking to add 2007/08 compatibility down the road. 
+The scraper should currently function properly for all games from the 2009 season onward. Looking to add 2007/08 compatibility down the road. 
