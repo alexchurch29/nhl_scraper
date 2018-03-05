@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+import numpy as np
 from nhl_gamescraper import scrape_games_by_date
 
 conn = sqlite3.connect('nhl.db')
@@ -1280,21 +1281,19 @@ def update(start_date, end_date):
     c.to_sql('coaches', conn, if_exists='append', index=False)
     o.to_sql('officials', conn, if_exists='append', index=False)
 
-    shifts_by_sec = pd.DataFrame(columns=['Game_Id', 'Time', 'Name', 'Team'])
     for row in s.itertuples():
-        shift = pd.DataFrame({'Time': [i for i in range(int(row.Start) + 1200 * ((int(row.Period)) - 1) + 1,
-                                                        int(row.End) + 1200 * ((int(row.Period)) - 1) + 1)]})
+        shift = pd.DataFrame({'Time': np.arange(int(row.Start) + 1200 * ((int(row.Period)) - 1) + 1,
+                                                        int(row.End) + 1200 * ((int(row.Period)) - 1) + 1)})
         shift['Game_Id'] = row.Game_Id
         shift['Name'] = row.Player
         shift['Team'] = row.Team
-        shifts_by_sec = shifts_by_sec.append(shift, ignore_index=True)
-    shifts_by_sec.to_sql('shifts_by_sec', conn, if_exists='append', index=False, chunksize=250000)
+        shift.to_sql('shifts_by_sec', conn, if_exists='append', index=False, chunksize=100000)
 
     t = shifts_by_sec_teams
     col = ['home_score', 'away_score']
     t[col] = t[col].ffill()
     t = t.drop_duplicates()
-    t.to_sql('shifts_by_sec_teams', conn, if_exists='replace', index=False, chunksize=250000)
+    t.to_sql('shifts_by_sec_teams', conn, if_exists='replace', index=False, chunksize=100000)
 
     # update stats tables
     skater_on_ice_counts.to_sql('skaters_on_ice_counts', conn, if_exists='replace', index=False)
