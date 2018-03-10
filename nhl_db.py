@@ -27,14 +27,32 @@ FROM rosters r
 INNER JOIN schedule z 
 ON r.game_id = z.game_id
 
-LEFT OUTER JOIN (SELECT r.name, ROUND(SUM(duration)/60,2) as TOI, r.pos as position
-    FROM shifts s 
-	INNER JOIN rosters r
-	ON (s.player = r.name 
-	    and s.team = r.team 
-	    and s.game_id = r.game_id)
-    GROUP BY name, pos) as icetime
-ON icetime.name = r.name and icetime.position = r.pos
+LEFT OUTER JOIN (SELECT name, team, pos, round(count(name),2)/60 as TOI, p.game_id as game_id, 
+season, z.home_team as home_team, z.away_team as away_team, game_type, date
+
+FROM (SELECT p.game_id as game_id, home_team, away_team, p.time as time, home_strength, away_strength, home_score, 
+away_score, z.name as name, z.team as team, z.pos
+
+FROM shifts_by_sec_teams p
+
+INNER JOIN (SELECT r.name, r.pos, r.team, r.game_id, p.time
+
+FROM rosters r
+
+INNER JOIN shifts_by_sec p
+
+ON r.name=p.name 
+and r.game_id=p.game_id
+and r.team=p.team) as z
+
+ON z.game_id=p.game_id and z.time=p.time) as p
+
+INNER JOIN schedule z
+
+ON p.game_id=z.game_id
+
+GROUP BY p.name, p.pos) as icetime
+ON icetime.name = r.name and icetime.pos = r.pos
 
 LEFT OUTER JOIN (SELECT name, count(name) as G, pos
     FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos
@@ -291,16 +309,32 @@ FROM rosters r
 INNER JOIN schedule z 
 ON r.game_id = z.game_id
 
-LEFT OUTER JOIN (SELECT r.name, ROUND(SUM(duration)/60,2) as TOI, r.pos as position
+LEFT OUTER JOIN (SELECT name, team, pos, round(count(name),2)/60 as TOI, p.game_id as game_id, 
+season, z.home_team as home_team, z.away_team as away_team, game_type, date
 
-FROM shifts s 
+FROM (SELECT p.game_id as game_id, home_team, away_team, p.time as time, home_strength, away_strength, home_score, away_score, z.name as name, 
+z.team as team, z.pos
 
-INNER JOIN rosters r
-ON (s.player = r.name 
-    and s.team = r.team 
-    and s.game_id = r.game_id)
-GROUP BY name, pos) as icetime
-ON icetime.name = r.name and icetime.position = r.pos
+FROM shifts_by_sec_teams p
+
+INNER JOIN (SELECT r.name, r.pos, r.team, r.game_id, p.time
+
+FROM rosters r
+
+INNER JOIN shifts_by_sec p
+
+ON r.name=p.name 
+and r.game_id=p.game_id
+and r.team=p.team) as z
+
+ON z.game_id=p.game_id and z.time=p.time) as p
+
+INNER JOIN schedule z
+
+ON p.game_id=z.game_id
+
+GROUP BY p.name, p.pos) as icetime
+ON icetime.name = r.name and icetime.pos = r.pos
 
 LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as CF
     FROM
@@ -1111,9 +1145,7 @@ WHERE r.pos != 'G'
     
 GROUP BY z.season, r.name, r.pos
 
-ORDER BY cf.CF DESC, r.name
-    
-;''', conn)
+ORDER BY cf.CF DESC, r.name;''', conn)
 
 shifts_by_sec_teams = pd.read_sql_query ('''SELECT p.*, CASE WHEN time = 1 THEN 0 ELSE d.home_score END home_score, 
 CASE WHEN time = 1 THEN 0 ELSE d.away_score END away_score
@@ -1126,50 +1158,7 @@ FROM (SELECT r.name, r.pos, r.team, r.game_id, p.time
 
 FROM rosters r
 
-INNER JOIN(
-
-    SELECT game_id, time, "0" as name, "1" as team
-
-    FROM shifts_by_sec
-
-    UNION ALL
-    SELECT game_id, time, "2" as name, "3" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "4" as name, "5" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "6" as name, "7" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "8" as name, "9" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "10" as name, "11" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "12" as name, "13" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "14" as name, "15" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "16" as name, "17" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "18" as name, "19" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "20" as name, "21" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "22" as name, "23" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "24" as name, "25" as team
-    FROM shifts_by_sec
-
-    WHERE name IS NOT NULL) as p
+INNER JOIN (SELECT * FROM shifts_by_sec) as p
 
 ON r.name=p.name 
 and r.game_id=p.game_id
@@ -1190,50 +1179,7 @@ FROM (SELECT r.name, r.pos, r.team, r.game_id, p.time
 
 FROM rosters r
 
-INNER JOIN(
-
-    SELECT game_id, time, "0" as name, "1" as team
-
-    FROM shifts_by_sec
-
-    UNION ALL
-    SELECT game_id, time, "2" as name, "3" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "4" as name, "5" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "6" as name, "7" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "8" as name, "9" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "10" as name, "11" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "12" as name, "13" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "14" as name, "15" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "16" as name, "17" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "18" as name, "19" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "20" as name, "21" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "22" as name, "23" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "24" as name, "25" as team
-    FROM shifts_by_sec
-
-    WHERE name IS NOT NULL) as p
+INNER JOIN (SELECT * FROM shifts_by_sec) as p
 
 ON r.name=p.name 
 and r.game_id=p.game_id
@@ -1244,7 +1190,7 @@ INNER JOIN schedule z
 ON p.game_id=z.game_id
 
 WHERE pos != 'G'
-and z.away_team=p.team
+and z.home_team=p.team
 
 GROUP BY team, time, p.game_id) as q
 
@@ -1266,7 +1212,7 @@ def update(start_date, end_date):
     p = game_data[2]
     c = game_data[3]
     o = game_data[4]
-    new_sched = game_data[6]
+    new_sched = game_data[5]
 
     # update schedule with games that have since gone final
     old_sched = pd.read_sql('schedule', conn)
@@ -1321,83 +1267,10 @@ def convert_to_csv():
     c.to_csv('coaches.csv', index=False)
     o.to_csv('officials.csv', index=False)
     z.to_csv('schedule.csv', index=False)
-    i.to_csv('shifts_by_sec.csv', index=False, chunksize=250000)
-    t.to_csv('shifts_by_sec_teams.csv', index=False, chunksize=250000)
+    i.to_csv('shifts_by_sec.csv', index=False, chunksize=100000)
+    t.to_csv('shifts_by_sec_teams.csv', index=False, chunksize=100000)
     skater_on_ice_counts.to_csv('skaters_on_ice_counts.csv', index=False)
     skaters_individual_counts.to_csv('skaters_individual_counts.csv', index=False)
 
 
-#update('2018-02-15', '2018-02-15')
-
-
-# TOI
-'''
-SELECT name, team, pos, round(count(name),2)/60 as TOI, p.game_id as game_id, 
-season, z.home_team as home_team, z.away_team as away_team, game_type, date
-
-FROM (SELECT p.game_id as game_id, home_team, away_team, p.time as time, home_strength, away_strength, home_score, away_score, z.name as name, 
-z.team as team, z.pos
-
-FROM shifts_by_sec_teams p
-
-INNER JOIN (SELECT r.name, r.pos, r.team, r.game_id, p.time
-
-FROM rosters r
-
-INNER JOIN(
-
-SELECT game_id, time, "0" as name, "1" as team
-
-FROM shifts_by_sec
-
-    UNION ALL
-    SELECT game_id, time, "2" as name, "3" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "4" as name, "5" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "6" as name, "7" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "8" as name, "9" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "10" as name, "11" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "12" as name, "13" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "14" as name, "15" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "16" as name, "17" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "18" as name, "19" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "20" as name, "21" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "22" as name, "23" as team
-    FROM shifts_by_sec
-    UNION ALL
-    SELECT game_id, time, "24" as name, "25" as team
-    FROM shifts_by_sec
-
-    WHERE name IS NOT NULL) as p
-
-ON r.name=p.name 
-and r.game_id=p.game_id
-and r.team=p.team) as z
-
-ON z.game_id=p.game_id and z.time=p.time) as p
-
-INNER JOIN schedule z
-
-ON p.game_id=z.game_id
-
-GROUP BY p.name, p.pos
-'''
+# update('2018-02-16', '2018-03-06')
