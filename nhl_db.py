@@ -32,8 +32,8 @@ def skaters_individual_counts():
     LEFT OUTER JOIN (SELECT name, team, pos, round(count(name),2)/60 as TOI, p.game_id as game_id, 
     season, z.home_team as home_team, z.away_team as away_team, game_type, date
     
-    FROM (SELECT p.game_id as game_id, home_team, away_team, p.time as time, home_strength, away_strength, home_score, 
-    away_score, z.name as name, z.team as team, z.pos
+    FROM (SELECT p.game_id as game_id, p.time as time, home_strength, away_strength, home_score, away_score, 
+    z.name as name, z.team as team, z.pos
     
     FROM shifts_by_sec_teams p
     
@@ -316,8 +316,8 @@ def skater_on_ice_counts():
     LEFT OUTER JOIN (SELECT name, team, pos, round(count(name),2)/60 as TOI, p.game_id as game_id, 
     season, z.home_team as home_team, z.away_team as away_team, game_type, date
     
-    FROM (SELECT p.game_id as game_id, home_team, away_team, p.time as time, home_strength, away_strength, home_score, away_score, z.name as name, 
-    z.team as team, z.pos
+    FROM (SELECT p.game_id as game_id, p.time as time, home_strength, away_strength, home_score, away_score, 
+    z.name as name, z.team as team, z.pos
     
     FROM shifts_by_sec_teams p
     
@@ -1150,7 +1150,7 @@ def skater_on_ice_counts():
     GROUP BY z.season, r.name, r.pos
     
     ORDER BY cf.CF DESC, r.name;''', conn)
-    return skater_on_ice_counts()
+    return skater_on_ice_counts
 
 
 def shifts_by_sec_teams():
@@ -1182,7 +1182,7 @@ def shifts_by_sec_teams():
     LEFT OUTER JOIN pbp d 
     
     ON p.game_id=d.game_id and p.time=((d.period-1)*1200+d.time_elapsed);''', conn)
-    return shifts_by_sec_teams()
+    return shifts_by_sec_teams
 
 
 def update(start_date, end_date):
@@ -1199,7 +1199,7 @@ def update(start_date, end_date):
     # update schedule with games that have since gone final
     old_sched = pd.read_sql('select * from schedule', conn)
     schedule = pd.concat([old_sched, new_sched], ignore_index=True)
-    schedule.drop_duplicates(subset=['Game_Id'], keep='last')
+    schedule = schedule.drop_duplicates(subset=['Game_Id'], keep='last')
     schedule.to_sql('schedule', conn, if_exists='replace', index=False)
 
     # update all other existing tables in database
@@ -1223,10 +1223,9 @@ def update(start_date, end_date):
     t[col] = t[col].ffill()
     t = t.drop_duplicates()
     t.to_sql('shifts_by_sec_teams', conn, if_exists='append', index=False, chunksize=100000)
-    pd.read_sql('DROP TABLE shifts_by_sec_temp', conn)
-
     skater_on_ice_counts().to_sql('skaters_on_ice_counts', conn, if_exists='replace', index=False)
     skaters_individual_counts().to_sql('skaters_individual_counts', conn, if_exists='replace', index=False)
+    pd.read_sql('DROP TABLE IF EXISTS shifts_by_sec_temp', conn)
 
 
 def convert_to_csv():
@@ -1255,4 +1254,4 @@ def convert_to_csv():
     skater_on_ice_counts().to_csv('skaters_on_ice_counts.csv', index=False)
     skaters_individual_counts().to_csv('skaters_individual_counts.csv', index=False)
 
-update('2018-02-17', '2018-03-23')
+# update('2018-02-18', '2018-03-23')
