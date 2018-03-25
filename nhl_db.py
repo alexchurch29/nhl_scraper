@@ -1221,7 +1221,7 @@ def update(start_date, end_date):
     t = shifts_by_sec_teams()
     col = ['home_score', 'away_score']
     t[col] = t[col].ffill()
-    t = t.drop_duplicates()
+    t = t.drop_duplicates(subset=['game_id', 'time'], keep='last')
     t.to_sql('shifts_by_sec_teams', conn, if_exists='append', index=False, chunksize=100000)
     skater_on_ice_counts().to_sql('skaters_on_ice_counts', conn, if_exists='replace', index=False)
     skaters_individual_counts().to_sql('skaters_individual_counts', conn, if_exists='replace', index=False)
