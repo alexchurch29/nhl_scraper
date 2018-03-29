@@ -1216,7 +1216,7 @@ def update(start_date, end_date):
 
     skater_on_ice_counts().to_sql('skaters_on_ice_counts', conn, if_exists='replace', index=False)
     skaters_individual_counts().to_sql('skaters_individual_counts', conn, if_exists='replace', index=False)
-    pd.read_sql('DROP TABLE IF EXISTS shifts_by_sec_temp', conn)
+    cur.executescript('DROP TABLE IF EXISTS shifts_by_sec_temp')
 
 
 def convert_to_csv():
@@ -1245,4 +1245,4 @@ def convert_to_csv():
     skater_on_ice_counts().to_csv('skaters_on_ice_counts.csv', index=False)
     skaters_individual_counts().to_csv('skaters_individual_counts.csv', index=False)
 
-# update('2018-02-18', '2018-03-27')
+# update('2018-03-28', '2018-03-28')
