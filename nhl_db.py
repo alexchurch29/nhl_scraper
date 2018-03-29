@@ -29,31 +29,26 @@ def skaters_individual_counts():
     INNER JOIN schedule z 
     ON r.game_id = z.game_id
     
-    LEFT OUTER JOIN (SELECT name, team, pos, round(count(name),2)/60 as TOI, p.game_id as game_id, 
-    season, z.home_team as home_team, z.away_team as away_team, game_type, date
-    
-    FROM (SELECT p.game_id as game_id, p.time as time, home_strength, away_strength, home_score, away_score, 
-    z.name as name, z.team as team, z.pos
-    
-    FROM shifts_by_sec_teams p
-    
-    INNER JOIN (SELECT r.name, r.pos, r.team, r.game_id, p.time
-    
-    FROM rosters r
-    
-    INNER JOIN shifts_by_sec p
-    
-    ON r.name=p.name 
-    and r.game_id=p.game_id
-    and r.team=p.team) as z
-    
-    ON z.game_id=p.game_id and z.time=p.time) as p
-    
-    INNER JOIN schedule z
-    
-    ON p.game_id=z.game_id
-    
-    GROUP BY p.name, p.pos) as icetime
+    LEFT OUTER JOIN (SELECT p.name as name, p.team as team, r.pos as pos, round(count(p.name),2)/60 as TOI
+
+        FROM shifts_by_sec p
+            
+        INNER JOIN shifts_by_sec_teams s
+        
+        ON s.game_id=p.game_id 
+        and s.time=p.time
+            
+        INNER JOIN rosters r
+            
+        ON r.name=p.name 
+        and r.game_id=p.game_id
+        and r.team=p.team
+            
+        INNER JOIN schedule z
+            
+        ON p.game_id=z.game_id
+            
+        GROUP BY p.name, r.pos) as icetime
     ON icetime.name = r.name and icetime.pos = r.pos
     
     LEFT OUTER JOIN (SELECT name, count(name) as G, pos
@@ -313,31 +308,26 @@ def skater_on_ice_counts():
     INNER JOIN schedule z 
     ON r.game_id = z.game_id
     
-    LEFT OUTER JOIN (SELECT name, team, pos, round(count(name),2)/60 as TOI, p.game_id as game_id, 
-    season, z.home_team as home_team, z.away_team as away_team, game_type, date
-    
-    FROM (SELECT p.game_id as game_id, p.time as time, home_strength, away_strength, home_score, away_score, 
-    z.name as name, z.team as team, z.pos
-    
-    FROM shifts_by_sec_teams p
-    
-    INNER JOIN (SELECT r.name, r.pos, r.team, r.game_id, p.time
-    
-    FROM rosters r
-    
-    INNER JOIN shifts_by_sec p
-    
-    ON r.name=p.name 
-    and r.game_id=p.game_id
-    and r.team=p.team) as z
-    
-    ON z.game_id=p.game_id and z.time=p.time) as p
-    
-    INNER JOIN schedule z
-    
-    ON p.game_id=z.game_id
-    
-    GROUP BY p.name, p.pos) as icetime
+    LEFT OUTER JOIN (SELECT p.name as name, p.team as team, r.pos as pos, round(count(p.name),2)/60 as TOI
+
+        FROM shifts_by_sec p
+            
+        INNER JOIN shifts_by_sec_teams s
+        
+        ON s.game_id=p.game_id 
+        and s.time=p.time
+            
+        INNER JOIN rosters r
+            
+        ON r.name=p.name 
+        and r.game_id=p.game_id
+        and r.team=p.team
+            
+        INNER JOIN schedule z
+            
+        ON p.game_id=z.game_id
+            
+        GROUP BY p.name, r.pos) as icetime
     ON icetime.name = r.name and icetime.pos = r.pos
     
     LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, COUNT(p.name) as CF
@@ -1221,8 +1211,9 @@ def update(start_date, end_date):
     t = shifts_by_sec_teams()
     col = ['home_score', 'away_score']
     t[col] = t[col].ffill()
-    t = t.drop_duplicates(subset=['game_id', 'time'], keep='last')
+    t = t.drop_duplicates(subset=['game_id', 'time'], keep='first')
     t.to_sql('shifts_by_sec_teams', conn, if_exists='append', index=False, chunksize=100000)
+
     skater_on_ice_counts().to_sql('skaters_on_ice_counts', conn, if_exists='replace', index=False)
     skaters_individual_counts().to_sql('skaters_individual_counts', conn, if_exists='replace', index=False)
     pd.read_sql('DROP TABLE IF EXISTS shifts_by_sec_temp', conn)
@@ -1254,4 +1245,4 @@ def convert_to_csv():
     skater_on_ice_counts().to_csv('skaters_on_ice_counts.csv', index=False)
     skaters_individual_counts().to_csv('skaters_individual_counts.csv', index=False)
 
-# update('2018-02-18', '2018-03-23')
+# update('2018-02-18', '2018-03-27')
