@@ -468,4 +468,26 @@ def parse_pbp(gameid):
                'A4Name', 'A4Num', 'A4Pos', 'A5Name', 'A5Num', 'A5Pos', 'A6Name', 'A6Num', 'A6Pos', 'Penalty_Shot']
     pbp = pbp.reindex_axis(columns, axis=1)
 
+    # add S/V adjustment coefficients for each pbp event
+    def adjustment(row):
+        if row['Home_Score'] - row['Away_Score'] >= 3:
+            return 1.132, 0.895
+        elif row['Home_Score'] - row['Away_Score'] == 2:
+            return 1.074, 0.936
+        elif row['Home_Score'] - row['Away_Score'] == 1:
+            return 1.026, 0.975
+        elif row['Home_Score'] - row['Away_Score'] == 0:
+            return 0.970, 1.032
+        elif row['Home_Score'] - row['Away_Score'] == -1:
+            return 0.915, 1.103
+        elif row['Home_Score'] - row['Away_Score'] == -2:
+            return 0.882, 1.154
+        elif row['Home_Score'] - row['Away_Score'] <= -3:
+            return 0.850, 1.214
+        else:
+            return np.NaN, np.NaN
+
+    pbp['Home_Adjustment'] = pbp.apply(lambda row: adjustment(row)[0], axis=1)
+    pbp['Away_Adjustment'] = pbp.apply(lambda row: adjustment(row)[1], axis=1)
+
     return pbp
