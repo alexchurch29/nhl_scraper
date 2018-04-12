@@ -526,7 +526,7 @@ def skaters_stats():
         GROUP BY game_id, p.name, p.pos, period, strength) as cf
     ON CF.name=r.name and cf.pos=r.pos and cf.strength = strength.strength and cf.period = strength.period
     
-    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.CA) as adjCA, strength, period, COUNT(p.name) as C
+    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.CA) as adjCA, strength, period, COUNT(p.name) as CA
     
         FROM (SELECT p.game_id, event_type, p1_team, p4_team, p.name as name, p.pos as pos, p.team as team, strength, 
         period, CA
