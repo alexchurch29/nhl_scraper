@@ -423,7 +423,7 @@ def skaters_stats():
     ON faceofflost.name = r.name and faceofflost.pos = r.pos and faceofflost.game_id = r.game_id
     and faceofflost.strength = strength.strength and faceofflost.period = strength.period
     
-    LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, SUM(p.CF) as CF, strength, period, COUNT(p.name) 
+    LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, SUM(p.CF) as adjCF, strength, period, COUNT(p.name) 
     as CF
     
         FROM (SELECT p.game_id, event_type, p1_team, p2_team, p.name as name, p.pos as pos, p.team as team, strength, 
@@ -526,7 +526,7 @@ def skaters_stats():
         GROUP BY game_id, p.name, p.pos, period, strength) as cf
     ON CF.name=r.name and cf.pos=r.pos and cf.strength = strength.strength and cf.period = strength.period
     
-    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.CA) as CA, strength, period, COUNT(p.name) as C
+    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.CA) as adjCA, strength, period, COUNT(p.name) as C
     
         FROM (SELECT p.game_id, event_type, p1_team, p4_team, p.name as name, p.pos as pos, p.team as team, strength, 
         period, CA
@@ -627,7 +627,7 @@ def skaters_stats():
         GROUP BY p.name, p.pos, period, strength) as ca
     ON CA.name=r.name and CA.pos=r.pos and ca.strength = strength.strength and ca.period = strength.period
     
-    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.FF) as FF, strength, period, COUNT(p.name) as FF
+    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.FF) as adjFF, strength, period, COUNT(p.name) as FF
     
         FROM (SELECT p.game_id, event_type, p1_team, p.name as name, p.pos as pos, p.team as team, strength, period, FF
     
@@ -718,7 +718,7 @@ def skaters_stats():
         GROUP BY p.name, p.pos, period, strength) as ff
     ON FF.name=r.name and FF.pos=r.pos and ff.strength = strength.strength and ff.period = strength.period
     
-    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.FA) as FA, strength, period, COUNT(p.name) as FA
+    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.FA) as adjFA, strength, period, COUNT(p.name) as FA
     
         FROM (SELECT p.game_id, event_type, p4_team, p.name as name, p.pos as pos, p.team as team, strength, period, FA
     
@@ -809,7 +809,7 @@ def skaters_stats():
         GROUP BY p.name, p.pos, period, strength) as fa
     ON FA.name=r.name and FA.pos=r.pos and fa.strength = strength.strength and fa.period = strength.period
     
-    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.SF) as SF, strength, period, COUNT(p.name) as SF
+    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.SF) as adjSF, strength, period, COUNT(p.name) as SF
     
         FROM (SELECT p.game_id, event_type, p1_team, p.name as name, p.pos as pos, p.team as team, strength, period, SF
     
@@ -899,14 +899,14 @@ def skaters_stats():
         GROUP BY p.name, p.pos, period, strength) as sf
     ON SF.name=r.name and SF.pos=r.pos and sf.strength = strength.strength and sf.period = strength.period
     
-    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.SA) as SA, strength, period, COUNT(p.name) as SA
+    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.SA) as adjSA, strength, period, COUNT(p.name) as SA
     
         FROM (SELECT p.game_id, event_type, p4_team, p.name as name, p.pos as pos, p.team as team, strength, period, SA
     
             FROM (SELECT p.game_id, event_type, p4_team, p.name, r.Team as team, p.pos, p.period,
                     case when p.p4_team = z.home_team then home_strength || 'v' || away_strength
                     else away_strength || 'v' ||  home_strength end strength,
-                    case when p.p4_team = z.home_team 1 * away_adjustment
+                    case when p.p4_team = z.home_team then 1 * away_adjustment
                     else 1 * home_adjustment end SA
     
                 FROM (SELECT game_id, event_type, p4_team, H1Name as name, H1Num as num, H1Pos as pos, period,
@@ -988,7 +988,7 @@ def skaters_stats():
         GROUP BY p.name, p.pos, period, strength) as sa
     ON SA.name=r.name and SA.pos=r.pos and sa.strength = strength.strength and sa.period = strength.period
     
-    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.GF) as GF, strength, period, COUNT(p.name) as GF
+    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.GF) as adjGF, strength, period, COUNT(p.name) as GF
     
         FROM (SELECT p.game_id, event_type, p1_team, p.name as name, p.pos as pos, p.team as team, strength, period, GF
     
@@ -1077,7 +1077,7 @@ def skaters_stats():
         GROUP BY p.name, p.pos, period, strength) as gf
     ON GF.name=r.name and GF.pos=r.pos and gf.strength = strength.strength and gf.period = strength.period
     
-    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.GA) as GA, strength, period, COUNT(p.name) as GA
+    LEFT OUTER JOIN(SELECT p.name as name, p.pos as pos, SUM(p.GA) as adjGA, strength, period, COUNT(p.name) as GA
     
         FROM (SELECT p.game_id, event_type, p4_team, p.name as name, p.pos as pos, p.team as team, strength, period, GA
     
@@ -1503,3 +1503,4 @@ def convert_to_csv():
     skaters_stats().to_csv('skaters_on_ice_counts.csv', index=False)
 
 # update('2018-04-08', '2018-04-08')
+skaters_stats().to_sql('skaters', conn, if_exists='append', index=False)
