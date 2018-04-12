@@ -30,11 +30,9 @@ def parse_shift(shift):
     shift_dict = dict()
     name = fix_name(' '.join([shift['firstName'].strip(' ').upper(), shift['lastName'].strip(' ').upper()]))
     shift_dict['Period'] = shift['period']
-    shift_dict['Player_Id'] = shift['playerId']
-    shift_dict['Player_Name'] = name
-    shift_dict['Team_Id'] = shift['teamId']
-    shift_dict['Team_Name'] = shift['teamAbbrev']
-    shift_dict['Shift_Num'] = shift['shiftNumber']
+    shift_dict['Player'] = name
+    shift_dict['Team'] = shift['teamAbbrev']
+    shift_dict['Shift'] = shift['shiftNumber']
     if shift['eventDescription'] is None:
         shift_dict['Start'] = convert_to_seconds(shift['startTime'])
         shift_dict['End'] = convert_to_seconds(shift['endTime'])
@@ -52,13 +50,12 @@ def parse_json(shift_json, game_id):
     :param game_id: if of game
     :return: DataFrame with info
     """
-    columns = ['Period', 'Player_Id', 'Player_Name', 'Team_Id', 'Team_Name', 'Shift_Num', 'Start', 'End',
-               'Duration']
+    columns = ['Player', 'Period', 'Team', 'Shift', 'Start', 'End', 'Duration']
     shifts = [parse_shift(shift) for shift in shift_json['data']]     # Go through the shifts
     shifts = [shift for shift in shifts if shift != {}]               # Get rid of null shifts (which happen at end)
 
     df = pd.DataFrame(shifts, columns = columns)
-    df.insert(0, 'Game_Id', str(game_id)[5:])
+    df.insert(0, 'Game_Id', str(game_id))
     df = df.sort_values(by=['Period', 'Start'], ascending=[True, True])  # Sort by period by time
     df = df.reset_index(drop=True)
 
