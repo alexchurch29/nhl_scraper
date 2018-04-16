@@ -9,12 +9,11 @@ cur = conn.cursor()
 
 def skaters_stats():
     skaters_stats = pd.read_sql_query ('''
-    SELECT z.season, z.game_type, z.game_id, z.date, CASE WHEN r.team = z.home_team THEN 'Home' ELSE 'Away' END venue,
-        strength.period, strength.strength, r.name, r.team, r.pos, 1 as GP, icetime.TOI, ifnull(goal.G,0) as G,
+    SELECT z.game_id, CASE WHEN r.team = z.home_team THEN 'Home' ELSE 'Away' END venue,
+        icetime.period, icetime.strength, r.name, r.team, r.pos, icetime.TOI, ifnull(goal.G,0) as G,
         ifnull(assist1.A1,0) as A1, ifnull(assist2.A2,0) as A2, (ifnull(assist1.A1,0) + ifnull(assist2.A2,0)) as A,
         (ifnull(goal.G,0) + (ifnull(assist1.A1,0) + ifnull(assist2.A2,0))) as P, (ifnull(goal.G,0) + 
-        ifnull(assist1.A1,0)) as P1, (ifnull(goal.G,0) + ifnull(shots.SH,0)) as SH, ifnull((round(ifnull(goal.G,0),2) /
-        (round(ifnull(shots.SH,0),2) + round(ifnull(goal.G,0),2))),0.0) as 'SH%', ifnull(missed.MISS,0) as MISS,
+        ifnull(assist1.A1,0)) as P1, (ifnull(goal.G,0) + ifnull(shots.SH,0)) as SH, ifnull(missed.MISS,0) as MISS,
         ifnull(blocked.BLOCK,0) as BLOCKED,
         (ifnull(goal.G,0) + ifnull(shots.SH,0) + ifnull(missed.MISS,0) + ifnull(blocked.BLOCK,0)) as iCF,
         (ifnull(goal.G,0) + ifnull(shots.SH,0) + ifnull(missed.MISS,0)) as iFF, ifnull(pim.PIM,0) as PIM,
@@ -23,38 +22,15 @@ def skaters_stats():
         ifnull(give.Giveaways,0) as Giveaways, ifnull(take.Takeaways,0) as Takeaways, ifnull(hit.hits,0) as Hits,
         ifnull(hittaken.Hits_Taken,0) as Hits_Taken, ifnull(blocksfor.Shot_Blocks,0) as Shot_Blocks,
         ifnull(faceoffwon.Faceoffs_Won,0) as Faceoffs_Won, ifnull(faceofflost.Faceoffs_Lost,0) as Faceoffs_Lost,
-        ifnull((round(ifnull(faceoffwon.Faceoffs_Won,0), 2) / (round(ifnull(faceoffwon.Faceoffs_Won,0), 2) +
-        round(ifnull(faceofflost.Faceoffs_Lost,0), 2))),0.0) as 'Faceoff%', ifnull(cf.CF,0) as CF,
-        ifnull(ca.CA,0) as CA, ifnull(round(ifnull(cf.CF,0),2) / (round(ifnull(cf.CF,0),2) + 
-        round(ifnull(ca.CA,0),2)),0) as 'CF%', ifnull(ff.FF,0) as FF, ifnull(fa.FA,0) as FA, 
-        ifnull(round(ifnull(ff.FF,0),2) / (round(ifnull(ff.FF,0),2)
-        + round(ifnull(fa.FA,0),2)),0) as 'FF%', ifnull(sf.SF,0) as SF, ifnull(sa.SA,0) as SA,
-        ifnull(round(ifnull(sf.SF,0),2) / (round(ifnull(sf.SF,0),2) + round(ifnull(sa.SA,0),2)),0)
-        as 'SF%', ifnull(gf.GF,0) as GF, ifnull(ga.GA,0) as GA, ifnull(round(ifnull(gf.GF,0),2) / 
-        (round(ifnull(gf.GF,0),2) + round(ifnull(ga.GA,0),2)),0) as 'GF%', ifnull(round(ifnull(gf.GF,0),2) / 
-        (round(ifnull(sf.SF,0),2)),0) as 'On_Ice_SH%', ifnull(1 - (round(ifnull(ga.GA,0),2) / 
-        (round(ifnull(sa.SA,0),2))),1) as 'On_Ice_SV%',
-        ifnull(round(ifnull(gf.GF,0),2) / (round(ifnull(sf.SF,0),2)),0) + ifnull(1 - (round(ifnull(ga.GA,0),2) /
-        (round(ifnull(sa.SA,0),2))),1) as PDO, ifnull(oz.OZ_Faceoffs,0) as OZ_Faceoffs, ifnull(dz.DZ_Faceoffs,0)
+        ifnull(cf.CF,0) as CF, ifnull(ca.CA,0) as CA, ifnull(ff.FF,0) as FF, ifnull(fa.FA,0) as FA, 
+        ifnull(sf.SF,0) as SF, ifnull(sa.SA,0) as SA, ifnull(gf.GF,0) as GF, ifnull(ga.GA,0) as GA, 
+        ifnull(oz.OZ_Faceoffs,0) as OZ_Faceoffs, ifnull(dz.DZ_Faceoffs,0)
         as DZ_Faceoffs, ifnull(nz.NZ_Faceoffs,0) as NZ_Faceoffs, ifnull(cf.adjCF,0) as adjCF,
-        ifnull(ca.adjCA,0) as adjCA, ifnull(round(ifnull(cf.adjCF,0),2) / (round(ifnull(cf.adjCF,0),2)
-        + round(ifnull(ca.adjCA,0),2)),0) as 'adjCF%', ifnull(ff.adjFF,0) as adjFF, ifnull(fa.adjFA,0) as adjFA,
-        ifnull(round(ifnull(ff.adjFF,0),2) / (round(ifnull(ff.adjFF,0),2) + round(ifnull(fa.adjFA,0),2)),0) as 'adjFF%',
-        ifnull(sf.adjSF,0) as adjSF, ifnull(sa.adjSA,0) as adjSA, ifnull(round(ifnull(sf.adjSF,0),2) /
-        (round(ifnull(sf.adjSF,0),2) + round(ifnull(sa.adjSA,0),2)),0) as 'adjSF%', ifnull(gf.adjGF,0) as adjGF,
-        ifnull(ga.adjGA,0) as adjGA, ifnull(round(ifnull(gf.adjGF,0),2) / (round(ifnull(gf.adjGF,0),2) +
-        round(ifnull(ga.adjGA,0),2)),0) as 'adjGF%'
+        ifnull(ca.adjCA,0) as adjCA, ifnull(ff.adjFF,0) as adjFF, ifnull(fa.adjFA,0) as adjFA,
+        ifnull(sf.adjSF,0) as adjSF, ifnull(sa.adjSA,0) as adjSA, ifnull(gf.adjGF,0) as adjGF,
+        ifnull(ga.adjGA,0) as adjGA
     
     FROM rosters_temp r
-    
-    LEFT OUTER JOIN (select game_id, period, strength
-        FROM (SELECT game_id, period, home_strength || 'v' || away_strength as strength
-        FROM pbp_temp p
-        UNION ALL
-        SELECT game_id, period, away_strength || 'v' || home_strength as strength
-        FROM pbp_temp p)
-        WHERE strength notnull) as strength
-    ON r.game_id = strength.game_id
     
     INNER JOIN schedule z
     ON r.game_id = z.game_id
@@ -78,8 +54,7 @@ def skaters_stats():
         ON p.game_id=z.game_id
     
         GROUP BY p.game_id, p.name, r.pos, period, strength) as icetime
-    ON icetime.name = r.name and icetime.pos = r.pos and icetime.strength = strength.strength
-    and strength.period = icetime.period
+    ON icetime.name = r.name and icetime.pos = r.pos and icetime.game_id = r.game_id
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as G, pos, strength, period
         FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team then
@@ -96,8 +71,8 @@ def skaters_stats():
     
         WHERE p.event_type = 'GOAL')
         GROUP BY name, pos, game_id, strength, period) as goal
-    ON goal.name = r.name and goal.pos = r.pos and goal.game_id = r.game_id and goal.strength = strength.strength
-    and goal.period = strength.period
+    ON goal.name = r.name and goal.pos = r.pos and goal.game_id = r.game_id and goal.strength = icetime.strength
+    and goal.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as A1, pos, strength, period
         FROM (SELECT r.name, p.p2_team, p.p2_num, r.pos, p.game_id, p.period, case when p.p2_team = z.home_team
@@ -115,7 +90,7 @@ def skaters_stats():
         WHERE p.event_type = 'GOAL')
         GROUP BY name, pos, game_id, strength, period) as assist1
     ON assist1.name = r.name and assist1.pos = r.pos and assist1.game_id = r.game_id
-    and assist1.strength = strength.strength and assist1.period = strength.period
+    and assist1.strength = icetime.strength and assist1.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as A2, pos, strength, period
         FROM (SELECT r.name, p.p3_team, p.p3_num, r.pos, p.game_id, p.period, case when p.p3_team = z.home_team
@@ -133,7 +108,7 @@ def skaters_stats():
         WHERE p.event_type = 'GOAL')
         GROUP BY name, pos, game_id, strength, period) as assist2
     ON assist2.name = r.name and assist2.pos = r.pos and assist2.game_id = r.game_id
-    and assist2.strength = strength.strength and assist2.period = strength.period
+    and assist2.strength = icetime.strength and assist2.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as SH, pos, strength, period
         FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team
@@ -150,8 +125,8 @@ def skaters_stats():
     
         WHERE p.event_type = 'SHOT')
         GROUP BY name, pos, game_id, strength, period) as shots
-    ON shots.name = r.name and shots.pos = r.pos and shots.game_id = r.game_id and shots.strength = strength.strength
-    and shots.period = strength.period
+    ON shots.name = r.name and shots.pos = r.pos and shots.game_id = r.game_id and shots.strength = icetime.strength
+    and shots.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as MISS, pos, strength, period
         FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team
@@ -169,7 +144,7 @@ def skaters_stats():
         WHERE p.event_type = 'MISS')
         GROUP BY name, pos, game_id, strength, period) as missed
     ON missed.name = r.name and missed.pos = r.pos and missed.game_id = r.game_id and missed.strength = 
-    strength.strength and missed.period = strength.period
+    icetime.strength and missed.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as BLOCK, pos, strength, period
         FROM (SELECT r.name, p.p2_team, p.p2_num, r.pos, p.game_id, p.period, case when p.p2_team = z.home_team
@@ -187,7 +162,7 @@ def skaters_stats():
         WHERE p.event_type = 'BLOCK')
         GROUP BY name, pos, game_id, strength, period) as blocked
     ON blocked.name = r.name and blocked.pos = r.pos and blocked.game_id = r.game_id
-    and blocked.strength = strength.strength and blocked.period = strength.period
+    and blocked.strength = icetime.strength and blocked.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, sum(penl_length) as PIM, pos, strength, period
         FROM (SELECT r.name, p.p1_team, p.p1_num, p.penl_length, r.pos, p.game_id, p.period, case when p.p1_team =
@@ -204,8 +179,8 @@ def skaters_stats():
     
         WHERE p.event_type = 'PENL')
         GROUP BY name, pos, game_id, strength, period) as pim
-    ON pim.name = r.name and pim.pos = r.pos and pim.game_id = r.game_id and pim.strength = strength.strength
-    and pim.period = strength.period
+    ON pim.name = r.name and pim.pos = r.pos and pim.game_id = r.game_id and pim.strength = icetime.strength
+    and pim.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as PENL_Taken, pos, strength, period
         FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team
@@ -222,8 +197,8 @@ def skaters_stats():
     
         WHERE p.event_type = 'PENL')
         GROUP BY name, pos, game_id, strength, period) as penl
-    ON penl.name = r.name and penl.pos = r.pos and penl.game_id = r.game_id and penl.strength = strength.strength
-    and penl.period = strength.period
+    ON penl.name = r.name and penl.pos = r.pos and penl.game_id = r.game_id and penl.strength = icetime.strength
+    and penl.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as Minor, pos, strength, period
         FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team
@@ -240,8 +215,8 @@ def skaters_stats():
     
         WHERE p.event_type = 'PENL' and p.penl_length = 2)
         GROUP BY name, pos, game_id, strength, period) as min
-    ON min.name = r.name and min.pos = r.pos and min.game_id = r.game_id and min.strength = strength.strength
-    and min.period = strength.period
+    ON min.name = r.name and min.pos = r.pos and min.game_id = r.game_id and min.strength = icetime.strength
+    and min.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as Major, pos, strength, period
         FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team
@@ -258,8 +233,8 @@ def skaters_stats():
     
         WHERE p.event_type = 'PENL' and p.penl_length = 5)
         GROUP BY name, pos, game_id, strength, period) as maj
-    ON maj.name = r.name and maj.pos = r.pos and maj.game_id = r.game_id and maj.strength = strength.strength
-    and maj.period = strength.period
+    ON maj.name = r.name and maj.pos = r.pos and maj.game_id = r.game_id and maj.strength = icetime.strength
+    and maj.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as Misconduct, pos, strength, period
         FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team
@@ -276,8 +251,8 @@ def skaters_stats():
     
         WHERE p.event_type = 'PENL' and p.penl_length = 10)
         GROUP BY name, pos, game_id, strength, period) as misc
-    ON misc.name = r.name and misc.pos = r.pos and misc.game_id = r.game_id and misc.strength = strength.strength
-    and misc.period = strength.period
+    ON misc.name = r.name and misc.pos = r.pos and misc.game_id = r.game_id and misc.strength = icetime.strength
+    and misc.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as PENL_Drawn, pos, strength, period
         FROM (SELECT r.name, p.p2_team, p.p2_num, r.pos, p.game_id, p.period, case when p.p2_team = z.home_team
@@ -294,8 +269,8 @@ def skaters_stats():
     
         WHERE p.event_type = 'PENL')
         GROUP BY name, pos, game_id, strength, period) as pend
-    ON pend.name = r.name and pend.pos = r.pos and pend.game_id = r.game_id and pend.strength = strength.strength
-    and pend.period = strength.period
+    ON pend.name = r.name and pend.pos = r.pos and pend.game_id = r.game_id and pend.strength = icetime.strength
+    and pend.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as Giveaways, pos, strength, period
             FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team
@@ -312,8 +287,8 @@ def skaters_stats():
     
             WHERE p.event_type = 'GIVE')
             GROUP BY name, pos, game_id, strength, period) as give
-    ON give.name = r.name and give.pos = r.pos and give.game_id = r.game_id and give.strength = strength.strength
-    and give.period = strength.period
+    ON give.name = r.name and give.pos = r.pos and give.game_id = r.game_id and give.strength = icetime.strength
+    and give.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as Takeaways, pos, strength, period
         FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team
@@ -330,8 +305,8 @@ def skaters_stats():
     
         WHERE p.event_type = 'TAKE')
         GROUP BY name, pos, game_id, strength, period) as take
-    ON take.name = r.name and take.pos = r.pos and take.game_id = r.game_id and take.strength = strength.strength
-    and take.period = strength.period
+    ON take.name = r.name and take.pos = r.pos and take.game_id = r.game_id and take.strength = icetime.strength
+    and take.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as Hits, pos, strength, period
             FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team
@@ -348,8 +323,8 @@ def skaters_stats():
     
             WHERE p.event_type = 'HIT')
             GROUP BY name, pos, game_id, strength, period) as hit
-    ON hit.name = r.name and hit.pos = r.pos and hit.game_id = r.game_id and hit.strength = strength.strength
-    and hit.period = strength.period
+    ON hit.name = r.name and hit.pos = r.pos and hit.game_id = r.game_id and hit.strength = icetime.strength
+    and hit.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as Hits_Taken, pos, strength, period
         FROM (SELECT r.name, p.p2_team, p.p2_num, r.pos, p.game_id, p.period, case when p.p2_team = z.home_team
@@ -367,7 +342,7 @@ def skaters_stats():
         WHERE p.event_type = 'HIT')
         GROUP BY name, pos, game_id, strength, period) as hittaken
     ON hittaken.name = r.name and hittaken.pos = r.pos and hittaken.game_id = r.game_id
-    and hittaken.strength = strength.strength and hittaken.period = strength.period
+    and hittaken.strength = icetime.strength and hittaken.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as Shot_Blocks, pos, strength, period
         FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team
@@ -385,7 +360,7 @@ def skaters_stats():
         WHERE p.event_type = 'BLOCK')
         GROUP BY name, pos, game_id, strength, period) as blocksfor
     ON blocksfor.name = r.name and blocksfor.pos = r.pos and blocksfor.game_id = r.game_id
-    and blocksfor.strength = strength.strength and blocksfor.period = strength.period
+    and blocksfor.strength = icetime.strength and blocksfor.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as Faceoffs_Won, pos, strength, period
         FROM (SELECT r.name, p.p1_team, p.p1_num, r.pos, p.game_id, p.period, case when p.p1_team = z.home_team
@@ -403,7 +378,7 @@ def skaters_stats():
         WHERE p.event_type = 'FAC')
         GROUP BY name, pos, game_id, strength, period) as faceoffwon
     ON faceoffwon.name = r.name and faceoffwon.pos = r.pos and faceoffwon.game_id = r.game_id
-    and faceoffwon.strength = strength.strength and faceoffwon.period = strength.period
+    and faceoffwon.strength = icetime.strength and faceoffwon.period = icetime.period
     
     LEFT OUTER JOIN (SELECT game_id, name, count(name) as Faceoffs_Lost, pos, strength, period
         FROM (SELECT r.name, p.p2_team, p.p2_num, r.pos, p.game_id, p.period, case when p.p2_team = z.home_team
@@ -421,7 +396,7 @@ def skaters_stats():
         WHERE p.event_type = 'FAC')
         GROUP BY name, pos, game_id, strength, period) as faceofflost
     ON faceofflost.name = r.name and faceofflost.pos = r.pos and faceofflost.game_id = r.game_id
-    and faceofflost.strength = strength.strength and faceofflost.period = strength.period
+    and faceofflost.strength = icetime.strength and faceofflost.period = icetime.period
     
     LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, SUM(p.CF) as adjCF, strength, period, COUNT(p.name) 
     as CF
@@ -524,7 +499,7 @@ def skaters_stats():
                 ) as p
     
         GROUP BY game_id, p.name, p.pos, period, strength) as cf
-    ON CF.name=r.name and cf.pos=r.pos and cf.strength = strength.strength and cf.period = strength.period
+    ON CF.name=r.name and cf.pos=r.pos and cf.strength = icetime.strength and cf.period = icetime.period
     and cf.game_id = r.game_id
     
     LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, SUM(p.CA) as adjCA, strength, period, 
@@ -627,7 +602,7 @@ def skaters_stats():
             ) as p
     
         GROUP BY p.name, p.pos, period, strength) as ca
-    ON CA.name=r.name and CA.pos=r.pos and ca.strength = strength.strength and ca.period = strength.period
+    ON CA.name=r.name and CA.pos=r.pos and ca.strength = icetime.strength and ca.period = icetime.period
     and ca.game_id = r.game_id
     
     LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, SUM(p.FF) as adjFF, strength, period, 
@@ -720,7 +695,7 @@ def skaters_stats():
             ) as p
     
         GROUP BY p.name, p.pos, period, strength) as ff
-    ON FF.name=r.name and FF.pos=r.pos and ff.strength = strength.strength and ff.period = strength.period
+    ON FF.name=r.name and FF.pos=r.pos and ff.strength = icetime.strength and ff.period = icetime.period
     and ff.game_id = r.game_id
     
     LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, SUM(p.FA) as adjFA, strength, period, 
@@ -813,7 +788,7 @@ def skaters_stats():
             ) as p
     
         GROUP BY p.name, p.pos, period, strength) as fa
-    ON FA.name=r.name and FA.pos=r.pos and fa.strength = strength.strength and fa.period = strength.period
+    ON FA.name=r.name and FA.pos=r.pos and fa.strength = icetime.strength and fa.period = icetime.period
     and fa.game_id = r.game_id
     
     LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, SUM(p.SF) as adjSF, strength, period, 
@@ -905,7 +880,7 @@ def skaters_stats():
             ) as p
     
         GROUP BY p.name, p.pos, period, strength) as sf
-    ON SF.name=r.name and SF.pos=r.pos and sf.strength = strength.strength and sf.period = strength.period
+    ON SF.name=r.name and SF.pos=r.pos and sf.strength = icetime.strength and sf.period = icetime.period
     and sf.game_id = r.game_id
     
     LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, SUM(p.SA) as adjSA, strength, period, 
@@ -996,7 +971,7 @@ def skaters_stats():
             ) as p
     
         GROUP BY p.name, p.pos, period, strength) as sa
-    ON SA.name=r.name and SA.pos=r.pos and sa.strength = strength.strength and sa.period = strength.period
+    ON SA.name=r.name and SA.pos=r.pos and sa.strength = icetime.strength and sa.period = icetime.period
     and sa.game_id = r.game_id
     
     LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, SUM(p.GF) as adjGF, strength, period, 
@@ -1087,7 +1062,7 @@ def skaters_stats():
             ) as p
     
         GROUP BY p.name, p.pos, period, strength) as gf
-    ON GF.name=r.name and GF.pos=r.pos and gf.strength = strength.strength and gf.period = strength.period
+    ON GF.name=r.name and GF.pos=r.pos and gf.strength = icetime.strength and gf.period = icetime.period
     and gf.game_id = r.game_id
     
     LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, SUM(p.GA) as adjGA, strength, period, 
@@ -1178,10 +1153,10 @@ def skaters_stats():
             ) as p
     
         GROUP BY p.name, p.pos, period, strength) as ga
-    ON GA.name=r.name and GA.pos=r.pos and ga.strength = strength.strength and ga.period = strength.period
+    ON GA.name=r.name and GA.pos=r.pos and ga.strength = icetime.strength and ga.period = icetime.period
     and ga.game_id = r.game_id
     
-    LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, SUM(p.name) as OZ_Faceoffs, strength, period
+    LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, COUNT(p.name) as OZ_Faceoffs, strength, period
     
         FROM (SELECT p.game_id, event_type, p.zone, p.name as name, p.pos as pos, p.team as team, strength, period
     
@@ -1255,7 +1230,7 @@ def skaters_stats():
             ) as p
     
         GROUP BY p.name, p.pos, period, strength) as oz
-    ON oz.name=r.name and oz.pos=r.pos and oz.strength = strength.strength and oz.period = strength.period
+    ON oz.name=r.name and oz.pos=r.pos and oz.strength = icetime.strength and oz.period = icetime.period
     and oz.game_id = r.game_id
     
     LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, COUNT(p.name) as DZ_Faceoffs, strength, period
@@ -1332,7 +1307,7 @@ def skaters_stats():
             ) as p
     
         GROUP BY p.name, p.pos, period, strength) as dz
-    ON dz.name=r.name and dz.pos=r.pos and dz.strength = strength.strength and dz.period = strength.period
+    ON dz.name=r.name and dz.pos=r.pos and dz.strength = icetime.strength and dz.period = icetime.period
     and dz.game_id = r.game_id
     
     LEFT OUTER JOIN(SELECT p.game_id, p.name as name, p.pos as pos, COUNT(p.name) as NZ_Faceoffs, strength, period
@@ -1409,12 +1384,12 @@ def skaters_stats():
             ) as p
     
         GROUP BY p.name, p.pos, period, strength) as nz
-    ON nz.name=r.name and nz.pos=r.pos and nz.strength = strength.strength and nz.period = strength.period
+    ON nz.name=r.name and nz.pos=r.pos and nz.strength = icetime.strength and nz.period = icetime.period
     and nz.game_id = r.game_id
     
-    WHERE r.pos != 'G' AND r.scratch is null AND icetime.TOI !=0
+    WHERE r.pos != 'G' AND r.scratch is null 
     
-    GROUP BY z.game_id, r.name, r.pos, strength.strength, strength.period;
+    GROUP BY z.game_id, r.name, r.pos, icetime.strength, icetime.period;
     ''', conn)
     return skaters_stats
 
@@ -1539,3 +1514,35 @@ def convert_to_csv():
     stats.to_csv('skaters.csv', index=False, chunksize=100000)
 
 # update('2018-04-08', '2018-04-08')
+
+'''
+SELECT count(distinct(s.game_id)) as GP, name, team, pos, SUM(TOI) as TOI, SUM(G) as G, SUM(A1) as A1, SUM(A2) as A2, SUM(A) as A, SUM(P) as P, 
+SUM(P1) as P1, SUM(SH) as SH, ifnull((round(ifnull(SUM(G),0),2) / (round(ifnull(SUM(SH),0),2))),0.0) as 'SH%', SUM(MISS) as MISS, 
+SUM(BLOCKED) as BLOCKED, SUM(iCF) as iCF, SUM(iFF) as iFF, SUM(PIM) as PIM, SUM(PENL_Taken) as PENL_Taken, 
+SUM(Major) as Major, SUM(Minor) as Minor, SUM(Misconduct) as Misconduct, SUM(PENL_DRAWN) as PENL_Drawn, SUM(Giveaways) as Giveaways, SUM(Takeaways) as Takeaways, 
+SUM(Hits) as Hits, SUM(Hits_Taken) as Hits_Taken, SUM(Shot_Blocks) as Shot_Blocks, SUM(Faceoffs_Won) as Faceoffs_Won, SUM(Faceoffs_Lost) as Faceoffs_Lost, 
+ifnull((round(ifnull(SUM(Faceoffs_Won),0), 2) / (round(ifnull(SUM(Faceoffs_Won),0), 2) + round(ifnull(SUM(Faceoffs_Lost),0), 2))),0.0) as 'Faceoff%',
+SUM(CF) as CF, SUM(CA) as CA, ifnull(round(ifnull(SUM(CF),0),2) / (round(ifnull(SUM(CF),0),2) + round(ifnull(SUM(CA),0),2)),0) as 'CF%', 
+SUM(FF) as FF, SUM(FA) as FA, ifnull(round(ifnull(SUM(FF),0),2) / (round(ifnull(SUM(FF),0),2) + round(ifnull(SUM(FA),0),2)),0) as 'FF%', 
+SUM(SF) as SF, SUM(SA) as SA, ifnull(round(ifnull(SUM(SF),0),2) / (round(ifnull(SUM(SF),0),2) + round(ifnull(SUM(SA),0),2)),0) as 'SF%', 
+SUM(GF) as GF, SUM(GA) as GA, ifnull(round(ifnull(SUM(GF),0),2) / (round(ifnull(SUM(GF),0),2) + round(ifnull(SUM(GA),0),2)),0) as 'GF%', 
+SUM(adjCF) as adjCF, SUM(adjCA) as adjCA, ifnull(round(ifnull(SUM(adjCF),0),2) / (round(ifnull(SUM(adjCF),0),2) + round(ifnull(SUM(adjCA),0),2)),0) as 'adjCF%', 
+SUM(adjFF) as adjFF, SUM(adjFA) as adjFA, ifnull(round(ifnull(SUM(adjFF),0),2) / (round(ifnull(SUM(adjFF),0),2) + round(ifnull(SUM(adjFA),0),2)),0) as 'adjFF%',
+SUM(adjSF) as adjSF, SUM(adjSA) as adjSA, ifnull(round(ifnull(SUM(adjSF),0),2) / (round(ifnull(SUM(adjSF),0),2) + round(ifnull(SUM(adjSA),0),2)),0) as 'adjSF%', 
+SUM(adjGF) as adjGF, SUM(adjGA) as adjGA, ifnull(round(ifnull(SUM(adjGF),0),2) / (round(ifnull(SUM(adjGF),0),2) + round(ifnull(SUM(adjGA),0),2)),0) as 'adjGF%',
+ifnull(round(ifnull(SUM(GF),0),2) / (round(ifnull(SUM(SF),0),2)),0) as 'On_Ice_SH%', 
+ifnull(1 - (round(ifnull(SUM(GA),0),2) / (round(ifnull(SUM(SA),0),2))),1) as 'On_Ice_SV%',
+ifnull(round(ifnull(SUM(GF),0),2) / (round(ifnull(SUM(SF),0),2)),0) + ifnull(1 - (round(ifnull(SUM(GA),0),2) /
+(round(ifnull(SUM(SA),0),2))),1) as 'PDO', SUM(OZ_Faceoffs) as OZ, SUM(DZ_Faceoffs) as DZ, SUM(NZ_Faceoffs) as NZ
+
+from skaters s
+
+inner join schedule z 
+on s.game_id = z.game_id
+
+where s.period != 5
+
+group by name, pos
+
+order by P desc
+'''
