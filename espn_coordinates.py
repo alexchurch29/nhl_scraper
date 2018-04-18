@@ -141,7 +141,7 @@ def parse_espn(espn_xml):
 
     :return: DataFrame with info
     """
-    columns = ['game_id', 'period', 'time_elapsed', 'event', 'xC', 'yC']
+    columns = ['Game_Id', 'Period', 'Time_Elapsed', 'Event', 'xC', 'yC']
 
     text = espn_xml.text
     # Occasionally we get malformed XML because of the presence of \x13 characters
@@ -159,7 +159,7 @@ def parse_espn(espn_xml):
     plays = [play for play in plays if play['event'] is not None]  # Get rid of plays that are None
 
     coords = pd.DataFrame(plays, columns=columns)
-    coords = coords.sort_values(['period', 'time_elapsed'])
+    coords = coords.sort_values(['Period', 'Time_Elapsed'])
 
     return coords
 
@@ -209,7 +209,7 @@ def scrape_date_range(start_date, end_date):
             away = fix_team(game['teams']['away']['team']['name'].upper())
             home = fix_team(game['teams']['home']['team']['name'].upper())
             coords = scrape_game(date, home, away)
-            coords['game_id'] = game['gamePk']
+            coords['Game_Id'] = game['gamePk']
             espn_coordinates.append(coords)
 
     espn_coordinates = pd.concat(espn_coordinates, ignore_index=False)
