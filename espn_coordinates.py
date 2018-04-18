@@ -126,9 +126,9 @@ def parse_event(event):
 
     info['xC'] = float(fields[0])
     info['yC'] = float(fields[1])
-    info['time_elapsed'] = convert_to_seconds(fields[3])
-    info['period'] = fields[4]
-    info['event'] = event_type(fields[8].upper())
+    info['Time_Elapsed'] = convert_to_seconds(fields[3])
+    info['Period'] = fields[4]
+    info['Event'] = event_type(fields[8].upper())
 
     return info
 
@@ -156,7 +156,7 @@ def parse_espn(espn_xml):
 
     events = tree[1]
     plays = [parse_event(event.text) for event in events]
-    plays = [play for play in plays if play['event'] is not None]  # Get rid of plays that are None
+    plays = [play for play in plays if play['Event'] is not None]  # Get rid of plays that are None
 
     coords = pd.DataFrame(plays, columns=columns)
     coords = coords.sort_values(['Period', 'Time_Elapsed'])
