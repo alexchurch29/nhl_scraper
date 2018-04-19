@@ -128,7 +128,7 @@ def parse_event(event):
     info['yC'] = float(fields[1])
     info['Time_Elapsed'] = convert_to_seconds(fields[3])
     info['Period'] = fields[4]
-    info['Event'] = event_type(fields[8].upper())
+    info['Event_Type'] = event_type(fields[8].upper())
 
     return info
 
@@ -141,7 +141,7 @@ def parse_espn(espn_xml):
 
     :return: DataFrame with info
     """
-    columns = ['Game_Id', 'Period', 'Time_Elapsed', 'Event', 'xC', 'yC']
+    columns = ['Game_Id', 'Period', 'Time_Elapsed', 'Event_Type', 'xC', 'yC']
 
     text = espn_xml.text
     # Occasionally we get malformed XML because of the presence of \x13 characters
@@ -156,7 +156,7 @@ def parse_espn(espn_xml):
 
     events = tree[1]
     plays = [parse_event(event.text) for event in events]
-    plays = [play for play in plays if play['Event'] is not None]  # Get rid of plays that are None
+    plays = [play for play in plays if play is not None and play['Event_Type'] is not None]  # Get rid of plays that are None
 
     coords = pd.DataFrame(plays, columns=columns)
     coords = coords.sort_values(['Period', 'Time_Elapsed'])
@@ -205,12 +205,13 @@ def scrape_date_range(start_date, end_date):
 
     for day in schedule_json['dates']:
         for game in day['games']:
-            date = day['date']
-            away = fix_team(game['teams']['away']['team']['name'].upper())
-            home = fix_team(game['teams']['home']['team']['name'].upper())
-            coords = scrape_game(date, home, away)
-            coords['Game_Id'] = game['gamePk']
-            espn_coordinates.append(coords)
+            if 20000 <= int(str(game['gamePk'])[5:]) < 40000: # do not include pre season or all star games
+                date = day['date']
+                away = fix_team(game['teams']['away']['team']['name'].upper())
+                home = fix_team(game['teams']['home']['team']['name'].upper())
+                coords = scrape_game(date, home, away)
+                coords['Game_Id'] = game['gamePk']
+                espn_coordinates.append(coords)
 
     espn_coordinates = pd.concat(espn_coordinates, ignore_index=False)
 
