@@ -40,12 +40,12 @@ def parse_player(player_list, player):
 
     players["Player_Id"] = player_list[player]["id"]
     players["Name"] = fix_name(player_list[player]["fullName"].upper())
-    players["First_Name"] = player_list[player]["firstName"]
-    players["Last_Name"] = player_list[player]["lastName"]
     if 'currentTeam' in player_list[player]:
         players['Team'] = fix_team(player_list[player]['currentTeam']['triCode'])
-    if 'currentTeam' in player_list[player]:
+    if 'primaryPosition' in player_list[player]:
         players['Pos'] = player_list[player]['primaryPosition']['abbreviation']
+    if 'shootsCatches' in player_list[player]:
+        players['Shoots'] = player_list[player]['shootsCatches']
     if 'primaryNumber' in player_list[player]:
         players['Num'] = player_list[player]['primaryNumber']
     if 'currentAge' in player_list[player]:
