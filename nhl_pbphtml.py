@@ -436,8 +436,6 @@ def parse_pbp(gameid):
                         score['away'] += 1
                     elif value == i[5][:3] and key == 'home':
                         score['home'] += 1
-                play['Home_Score'] = score['home']
-                play['Away_Score'] = score['away']
 
             if i[4] == 'STOP':
                 if 'ICING' in i[5]:
@@ -449,7 +447,7 @@ def parse_pbp(gameid):
 
     pbp = pd.DataFrame(pbp_events)
     pbp['Game_Id'] = gameid
-
+    '''
     try:
         pbp['xC'] = get_coords(gameid)['xC']
     except:
@@ -458,11 +456,12 @@ def parse_pbp(gameid):
         pbp['yC'] = get_coords(gameid)['yC']
     except:
         pass
+    '''
 
     columns = ['Game_Id', 'Period', 'Event_Num', 'Event_Type', 'Secondary_Type', 'Tertiary_Type', 'Penl_Length',
                'Event_Desc', 'Time_Elapsed', 'P1_Team', 'P1_Num', 'P2_Team', 'P2_Num', 'P3_Team', 'P3_Num', 'P4_Team',
                'P4_Num', 'Home_Score', 'Away_Score', 'Home_Zone', 'Away_Zone', 'Home_Strength', 'Away_Strength',
-               'G_Pulled_Home', 'G_Pulled_Away', 'xC', 'yC', 'Dist', 'H1Name', 'H1Num', 'H1Pos', 'H2Name', 'H2Num',
+               'G_Pulled_Home', 'G_Pulled_Away', 'Dist', 'H1Name', 'H1Num', 'H1Pos', 'H2Name', 'H2Num',
                'H2Pos', 'H3Name', 'H3Num', 'H3Pos', 'H4Name', 'H4Num', 'H4Pos', 'H5Name', 'H5Num', 'H5Pos', 'H6Name',
                'H6Num', 'H6Pos', 'A1Name', 'A1Num', 'A1Pos', 'A2Name', 'A2Num', 'A2Pos', 'A3Name', 'A3Num', 'A3Pos',
                'A4Name', 'A4Num', 'A4Pos', 'A5Name', 'A5Num', 'A5Pos', 'A6Name', 'A6Num', 'A6Pos', 'Penalty_Shot']
