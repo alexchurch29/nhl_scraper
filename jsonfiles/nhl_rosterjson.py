@@ -100,8 +100,8 @@ def parse_json(game_json):
     roster['Game_Id'] = game_json['gamePk']
 
     columns = ['Game_Id', 'Player_Id', 'Name', 'Pos', 'Shoots', 'Birth_Date', 'Birth_City', 'Birth_Region',
-               'Birth_Country', 'Nationality', 'Height', 'Weight', 'Draft_Year', 'Draft_Team', 'Round', 'Pick',
-               'Overall']
+               'Birth_Country', 'Nationality', 'Height', 'Weight', 'Draft_Year', 'Draft_Team', 'Draft_Round',
+               'Draft_Pick','Draft_Overall']
     roster = roster.reindex_axis(columns, axis=1)
 
     return roster
