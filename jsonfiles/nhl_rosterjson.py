@@ -40,16 +40,16 @@ def parse_player(player_list, player):
 
     players["Player_Id"] = player_list[player]["id"]
     players["Name"] = fix_name(player_list[player]["fullName"].upper())
-    if 'currentTeam' in player_list[player]:
-        players['Team'] = fix_team(player_list[player]['currentTeam']['triCode'])
+    # if 'currentTeam' in player_list[player]:
+    #    players['Team'] = fix_team(player_list[player]['currentTeam']['triCode'])
     if 'primaryPosition' in player_list[player]:
         players['Pos'] = player_list[player]['primaryPosition']['abbreviation']
     if 'shootsCatches' in player_list[player]:
         players['Shoots'] = player_list[player]['shootsCatches']
-    if 'primaryNumber' in player_list[player]:
-        players['Num'] = player_list[player]['primaryNumber']
-    if 'currentAge' in player_list[player]:
-        players['Age'] = player_list[player]['currentAge']
+    # if 'primaryNumber' in player_list[player]:
+    #    players['Num'] = player_list[player]['primaryNumber']
+    # if 'currentAge' in player_list[player]:
+    #    players['Age'] = player_list[player]['currentAge']
     if 'birthDate' in player_list[player]:
         players['Birth_Date'] = player_list[player]['birthDate']
     if 'birthCity' in player_list[player]:
@@ -77,8 +77,8 @@ def parse_player(player_list, player):
     bio = [i.get_text() for i in spans][0].split()  # split into list
     try:
         draft = bio[bio.index('Draft:'):bio.index('Draft:') + 9]  # find index for draft info.
-        players['Year'] = int(draft[1])
-        players['Team'] = draft[2].strip(',')
+        players['Draft_Year'] = int(draft[1])
+        players['Draft_Team'] = draft[2].strip(',')
         players['Round'] = int(re.findall("\d+", draft[3])[0])
         players['Pick'] = int(re.findall("\d+", draft[5])[0])
         players['Overall'] = int(re.findall("\d+", draft[7])[0])
@@ -99,8 +99,9 @@ def parse_json(game_json):
     roster = pd.DataFrame(rosters)
     roster['Game_Id'] = game_json['gamePk']
 
-    columns = ['Game_Id', 'Player_Id', 'Name', 'Num', 'Pos', 'Team', 'Age', 'Birth_Date', 'Birth_City', 'Birth_Region',
-               'Birth_Country', 'Nationality', 'Height', 'Weight', 'Year', 'Team', 'Round', 'Pick', 'Overall']
+    columns = ['Game_Id', 'Player_Id', 'Name', 'Pos', 'Shoots', 'Birth_Date', 'Birth_City', 'Birth_Region',
+               'Birth_Country', 'Nationality', 'Height', 'Weight', 'Draft_Year', 'Draft_Team', 'Round', 'Pick',
+               'Overall']
     roster = roster.reindex_axis(columns, axis=1)
 
     return roster
