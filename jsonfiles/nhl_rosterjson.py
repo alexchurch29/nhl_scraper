@@ -1,9 +1,12 @@
+from bs4 import BeautifulSoup
+import re
 import pandas as pd
 import requests
 import json
 import time
 from nhl_main import get_url
 from nhl_players import fix_name
+from nhl_teams import fix_team
 
 
 def get_pbp(game_id):
@@ -26,28 +29,6 @@ def get_pbp(game_id):
     return pbp_json
 
 
-def parse_gameinfo(game_json):
-    """
-    :param game_json: raw json
-    :return: dict of coaches, officials
-    """
-
-    coaches = dict()
-    officials = dict()
-
-    coaches['Away'] = game_json['liveData']['boxscore']['teams']['away']['coaches'][0]['person']['fullName']
-    coaches['Home'] = game_json['liveData']['boxscore']['teams']['home']['coaches'][0]['person']['fullName']
-
-    referees = [official['official']['fullName'] for official in game_json['liveData']['boxscore']['officials']
-                if official['officialType'] == 'Referee']
-    linesman = [official['official']['fullName'] for official in game_json['liveData']['boxscore']['officials']
-                if official['officialType'] == 'Linesman']
-    officials['Referee'] = referees
-    officials['Linesman'] = linesman
-
-    return coaches, officials
-
-
 def parse_player(player_list, player):
     """
     :param player_list = list of players from raw json
@@ -58,30 +39,52 @@ def parse_player(player_list, player):
     players = dict()
 
     players["Player_Id"] = player_list[player]["id"]
-    players["Full_Name"] = fix_name(player_list[player]["fullName"].upper())
-
-    # Below info is always as of current season and not as of date of game. Disclude for now.
-    '''
+    players["Name"] = fix_name(player_list[player]["fullName"].upper())
+    players["First_Name"] = player_list[player]["firstName"]
+    players["Last_Name"] = player_list[player]["lastName"]
+    if 'currentTeam' in player_list[player]:
+        players['Team'] = fix_team(player_list[player]['currentTeam']['triCode'])
+    if 'currentTeam' in player_list[player]:
+        players['Pos'] = player_list[player]['primaryPosition']['abbreviation']
     if 'primaryNumber' in player_list[player]:
-        players['Number'] = player_list[player]['primaryNumber']
+        players['Num'] = player_list[player]['primaryNumber']
+    if 'currentAge' in player_list[player]:
+        players['Age'] = player_list[player]['currentAge']
     if 'birthDate' in player_list[player]:
         players['Birth_Date'] = player_list[player]['birthDate']
+    if 'birthCity' in player_list[player]:
+        players['Birth_City'] = player_list[player]['birthCity']
+    if 'birthStateProvince' in player_list[player]:
+        players['Birth_Region'] = player_list[player]['birthStateProvince']
+    if 'birthCountry' in player_list[player]:
+        players['Birth_Country'] = player_list[player]['birthCountry']
+    if 'nationality' in player_list[player]:
+        players['Nationality'] = player_list[player]['nationality']
     if 'height' in player_list[player]:
         players['Height'] = player_list[player]['height']
     if 'weight' in player_list[player]:
-    players['Weight'] = player_list[player]['weight']
-    if 'alternateCaptain' in player_list[player] and player_list[player]['alternateCaptain'] is True:
-        players['Captain'] = 'A'
-    elif 'captain' in player_list[player] and player_list[player]['captain'] is True:
-        players['Captain'] = 'C'
-    if 'rookie' in player_list[player] and player_list[player]['rookie']is True:
-        players['Rookie'] = 'R'
-    if 'shootsCatches' in player_list[player]:
-        players['Shoots'] = player_list[player]['shootsCatches']
-    # players['Team_Id'] = player_list[player]['currentTeam']['id']
-    # players['Team_Name'] = player_list[player]['currentTeam']['name']
-    players['Position'] = player_list[player]['primaryPosition']['abbreviation']
-    '''
+        players['Weight'] = player_list[player]['weight']
+
+    # get draft info from player html page
+    url = 'https://www.nhl.com/player/{}-{}-{}'.format(player_list[player]["firstName"],
+                                                       player_list[player]["lastName"],
+                                                       player_list[player]["id"])
+    html = get_url(url)
+    time.sleep(1)
+    soup = BeautifulSoup(html.content, 'html.parser')
+
+    spans = soup.find_all('div', {'class': 'player-overview__bio'})  # find bio section
+    bio = [i.get_text() for i in spans][0].split()  # split into list
+    try:
+        draft = bio[bio.index('Draft:'):bio.index('Draft:') + 9]  # find index for draft info.
+        players['Year'] = int(draft[1])
+        players['Team'] = draft[2].strip(',')
+        players['Round'] = int(re.findall("\d+", draft[3])[0])
+        players['Pick'] = int(re.findall("\d+", draft[5])[0])
+        players['Overall'] = int(re.findall("\d+", draft[7])[0])
+    except:
+        pass  # player is undrafted
+
     return players
 
 
@@ -95,49 +98,12 @@ def parse_json(game_json):
     rosters = [parse_player(player_list, player) for player in player_list]
     roster = pd.DataFrame(rosters)
     roster['Game_Id'] = game_json['gamePk']
-    '''
-    scratches = list()
-    goalies = list()
-    stars = list()
-    for player in player_list:
-        if player_list[player]['id'] in game_json['liveData']['boxscore']['teams']['away']['scratches'] or \
-                        player_list[player]['id'] in game_json['liveData']['boxscore']['teams']['home']['scratches']:
-            scratches.append(True)
-        else:
-            scratches.append(np.NaN)
-    for player in player_list:
-        if player_list[player]['id'] == game_json['liveData']['decisions']['winner']['id']:
-            goalies.append('W')
-        elif player_list[player]['id'] == game_json['liveData']['decisions']['loser']['id']:
-            goalies.append('L')
-        else:
-            goalies.append(np.NaN)
-    for player in player_list:
-        if player_list[player]['id'] == game_json['liveData']['decisions']['firstStar']['id']:
-            stars.append(1)
-        elif player_list[player]['id'] == game_json['liveData']['decisions']['secondStar']['id']:
-            stars.append(2)
-        elif player_list[player]['id'] == game_json['liveData']['decisions']['thirdStar']['id']:
-            stars.append(3)
-        else:
-            stars.append(np.NaN)
-    roster['Scratch'] = scratches
-    roster['Goalie'] = goalies
-    roster['Star'] = stars
-    '''
-    columns = ['Game_Id', 'Player_Id', 'Full_Name'] #'Number', 'Position', 'Shoots', 'Birth_Date',
-               # 'Height', 'Weight', 'Captain', 'Rookie', 'Scratch', 'Goalie', 'Star'
+
+    columns = ['Game_Id', 'Player_Id', 'Name', 'Num', 'Pos', 'Team', 'Age', 'Birth_Date', 'Birth_City', 'Birth_Region',
+               'Birth_Country', 'Nationality', 'Height', 'Weight', 'Year', 'Team', 'Round', 'Pick', 'Overall']
     roster = roster.reindex_axis(columns, axis=1)
 
-    game_data = parse_gameinfo(game_json)
-
-    coaches = pd.DataFrame(game_data[0], index=[0])
-    coaches['game_Id'] = game_json['gamePk']
-
-    officials = pd.DataFrame(game_data[1])
-    officials['game_Id'] = game_json['gamePk']
-
-    return roster#, coaches, officials
+    return roster
 
 
 def scrape_game(game_id):
