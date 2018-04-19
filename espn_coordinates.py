@@ -72,6 +72,7 @@ def get_espn_game_id(date, home_team, away_team):
     """
     url = 'http://www.espn.com/nhl/scoreboard?date={}'.format(date.replace('-', ''))
     response = get_url(url)
+    time.sleep(1)
 
     # If can't get or not there return None
     if not response:
