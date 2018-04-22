@@ -78,7 +78,6 @@ def get_players(soup):
 
         return player
 
-
     # For those with (A) or (C) in name field get rid of it
     # First condition is to control when we get whitespace as one of the indices
     players['Away'] = [fix_capt(i) if i[0] != '\xa0' and i[2].find('(') != -1 else i for i in away_players]
@@ -267,7 +266,6 @@ def parse_roster(game_id):
     away_roster = pd.DataFrame(players[0][0]['Away'], columns=['Num', 'Pos', 'Name'])
     away_roster['Game_Id'] = game_id
     away_roster['Team'] = players[0][3]['Away']
-    away_roster['Home_Away'] = 'Away'
     scratch = []
     for player in players[0][0]['Away']:
         if player in players[0][1]['Away Scratch']:
@@ -288,7 +286,6 @@ def parse_roster(game_id):
     home_roster = pd.DataFrame(players[0][0]['Home'], columns=['Num', 'Pos', 'Name'])
     home_roster['Game_Id'] = game_id
     home_roster['Team'] = players[0][3]['Home']
-    home_roster['Home_Away'] = 'Home'
     scratch = []
     for player in players[0][0]['Home']:
         if player in players[0][1]['Home Scratch']:

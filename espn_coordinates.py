@@ -125,8 +125,8 @@ def parse_event(event):
     if fields[4] == '5':
         return None
 
-    info['xC'] = float(fields[0])
-    info['yC'] = float(fields[1])
+    info['xC'] = int(fields[0])
+    info['yC'] = int(fields[1])
     info['Time_Elapsed'] = convert_to_seconds(fields[3])
     info['Period'] = fields[4]
     info['Event_Type'] = event_type(fields[8].upper())
@@ -157,7 +157,8 @@ def parse_espn(espn_xml):
 
     events = tree[1]
     plays = [parse_event(event.text) for event in events]
-    plays = [play for play in plays if play is not None and play['Event_Type'] is not None]  # Get rid of plays that are None
+    # Get rid of plays that are None
+    plays = [play for play in plays if play is not None and play['Event_Type'] is not None]
 
     coords = pd.DataFrame(plays, columns=columns)
     coords = coords.sort_values(['Period', 'Time_Elapsed'])
@@ -206,7 +207,7 @@ def scrape_date_range(start_date, end_date):
 
     for day in schedule_json['dates']:
         for game in day['games']:
-            if 20000 <= int(str(game['gamePk'])[5:]) < 40000: # do not include pre season or all star games
+            if 20000 <= int(str(game['gamePk'])[5:]) < 40000:  # Do not include pre season or all star games
                 date = day['date']
                 away = fix_team(game['teams']['away']['team']['name'].upper())
                 home = fix_team(game['teams']['home']['team']['name'].upper())

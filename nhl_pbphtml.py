@@ -51,7 +51,7 @@ def strip_html_pbp(td):
             # 6 & 7-> These are the player one ice one's
             # The second statement controls for when it's just a header
             baz = td[y].find_all('td')
-            bar = [baz[z] for z in range(len(baz)) if z % 4 != 0] # Because of previous step we get repeats..delete some
+            bar = [baz[z] for z in range(len(baz)) if z % 4 != 0]  # Because of previous step we get repeats
 
             # The setup in the list is now: Name/Number->Position->Blank...and repeat
             # Now strip all the html

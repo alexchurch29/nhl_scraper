@@ -5,6 +5,7 @@ import re
 from nhl_players import fix_name
 from nhl_teams import fix_team
 from nhl_main import get_url, convert_to_seconds
+from nhl_shiftsjson import get_shifts as get_json
 
 
 def get_teams(soup):
@@ -56,8 +57,10 @@ def get_shifts(game_id):
     :return: DataFrame with all shifts, return None when an exception is thrown when parsing
     """
     game_id = str(game_id)
-    home_url = 'http://www.nhl.com/scores/htmlreports/{}{}/TH{}.HTM'.format(game_id[:4], int(game_id[:4])+1, game_id[4:])
-    away_url = 'http://www.nhl.com/scores/htmlreports/{}{}/TV{}.HTM'.format(game_id[:4], int(game_id[:4])+1, game_id[4:])
+    home_url = 'http://www.nhl.com/scores/htmlreports/{}{}/TH{}.HTM'.format(game_id[:4], int(game_id[:4])+1,
+                                                                            game_id[4:])
+    away_url = 'http://www.nhl.com/scores/htmlreports/{}{}/TV{}.HTM'.format(game_id[:4], int(game_id[:4])+1,
+                                                                            game_id[4:])
 
     home = get_url(home_url)
     time.sleep(1)
@@ -133,5 +136,8 @@ def scrape_game(game_id):
 
     game_df = game_df.sort_values(by=['Period', 'Start'], ascending=[True, True])  # Sort by period and by time
     game_df = game_df.reset_index(drop=True)
+
+    if game_df.empty is True:
+        game_df = get_json(game_id)  # May encounter games where html is empty. Use json to pick up slack in that case
 
     return game_df
