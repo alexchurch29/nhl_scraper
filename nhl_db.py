@@ -8,7 +8,7 @@ cur = conn.cursor()
 
 
 def skaters_stats():
-    skaters_stats = pd.read_sql_query ('''
+    skaters_stats = pd.read_sql_query('''
     SELECT z.game_id, CASE WHEN r.team = z.home_team THEN 'Home' ELSE 'Away' END venue,
         icetime.period, icetime.strength, r.name, r.team, r.pos, icetime.TOI, ifnull(goal.G,0) as G,
         ifnull(assist1.A1,0) as A1, ifnull(assist2.A2,0) as A2, (ifnull(assist1.A1,0) + ifnull(assist2.A2,0)) as A,
@@ -1450,6 +1450,7 @@ def update(start_date, end_date):
     c = game_data[3]
     o = game_data[4]
     new_sched = game_data[5]
+    b = game_data[6]
 
     # update schedule with games that have since gone final
     old_sched = pd.read_sql('select * from schedule', conn)
@@ -1463,6 +1464,7 @@ def update(start_date, end_date):
     p.to_sql('pbp_temp', conn, if_exists='append', index=False)
     c.to_sql('coaches', conn, if_exists='append', index=False)
     o.to_sql('officials', conn, if_exists='append', index=False)
+    b.to_sql('bios', conn, if_exists='append', index=False)
 
     # compiles df of who is on the ice at every second of the game
     for row in s.itertuples():
@@ -1481,10 +1483,10 @@ def update(start_date, end_date):
     t.to_sql('shifts_by_sec_teams_temp', conn, if_exists='append', index=False, chunksize=100000)
 
     # builds queriable df of players stats grouped by game and situation
-    skaters_stats().to_sql('skaters', conn, if_exists='append', index=False)
+    #skaters_stats().to_sql('skaters', conn, if_exists='append', index=False)
 
     # deletes temporary tables used to compile stats for newly scraped games and appends their rows to existing tables
-    merge_tables()
+    #merge_tables()
     
 
 def convert_to_csv():
@@ -1501,6 +1503,7 @@ def convert_to_csv():
     z = pd.read_sql('schedule', conn)
     i = pd.read_sql('shifts_by_sec', conn)
     t = pd.read_sql('shifts_by_sec_teams', conn)
+    b = pd.read_sql('bios', conn)
     stats = pd.read_sql('skaters', conn)
 
     r.to_csv('rosters.csv', index=False)
@@ -1509,6 +1512,7 @@ def convert_to_csv():
     c.to_csv('coaches.csv', index=False)
     o.to_csv('officials.csv', index=False)
     z.to_csv('schedule.csv', index=False)
+    b.to_csv('bios.csv', index=False)
     i.to_csv('shifts_by_sec.csv', index=False, chunksize=100000)
     t.to_csv('shifts_by_sec_teams.csv', index=False, chunksize=100000)
     stats.to_csv('skaters.csv', index=False, chunksize=100000)
