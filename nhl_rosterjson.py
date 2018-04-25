@@ -91,6 +91,8 @@ def parse_player(player_list, player):
     except:
         pass  # if player is undrafted this section does not exist. not as error so we will just skip this step
 
+    old_players.append(player_list[player]['id'])
+
     return players
 
 
